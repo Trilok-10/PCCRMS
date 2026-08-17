@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient List - Receptionist Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../../css/style.css" rel="stylesheet">
+    <link href="../../css/dashboard.css" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <i class="bi bi-hospital logo-icon"></i>
+                <h4>Patient Care System</h4>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-section">Main Menu</li>
+                <li><a href="dashboard.html"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                <li><a href="register-patient.html"><i class="bi bi-person-plus"></i> Register Patient</a></li>
+                <li><a href="patient-search.html" class="active"><i class="bi bi-people"></i> Patient List</a></li>
+                <li><a href="appointments.html"><i class="bi bi-calendar-check"></i> Appointments</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <button class="logout-btn" onclick="handleLogout()">
+                    <i class="bi bi-box-arrow-left"></i> Logout
+                </button>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <header class="top-navbar">
+                <button class="sidebar-toggle" onclick="toggleSidebar()">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h1 class="page-title">Patient List</h1>
+                <div class="navbar-right"></div>
+            </header>
+
+            <div class="page-content">
+                <!-- Search Box -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <div class="search-box">
+                                    <i class="bi bi-search search-icon"></i>
+                                    <input type="text" class="form-control" id="searchInput"
+                                           placeholder="Search by MRN, name, email, or phone...">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-primary w-100" onclick="searchPatients()">
+                                    <i class="bi bi-search me-2"></i>Search
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Search by MRN for exact match or use name/email/phone for partial match.
+                                Leave empty and click Search to see all patients.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Patient List -->
+                <div class="data-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="bi bi-people me-2"></i>Patient List</h5>
+                        <span class="badge bg-primary" id="patientCount">0 patients</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>MRN</th>
+                                        <th>Name</th>
+                                        <th>DOB</th>
+                                        <th>Gender</th>
+                                        <th>Contact</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="patientsTableBody">
+                                    <tr>
+                                        <td colspan="7" class="text-center py-4">
+                                            <div class="spinner-border text-primary"></div>
+                                            <p class="mt-2 text-muted">Loading patients...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <!-- View/Edit Patient Modal -->
+    <div class="modal fade" id="patientModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-person me-2"></i>Patient Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="editPatientForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="editPatientId">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Full Name</label>
+                                <input type="text" class="form-control" id="editFullName" required
+                                       pattern="[A-Za-z\s]+" minlength="3" title="Only letters and spaces, minimum 3 characters">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">MRN</label>
+                                <input type="text" class="form-control" id="editMrn" readonly>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Date of Birth</label>
+                                <input type="date" class="form-control" id="editDob" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Gender</label>
+                                <select class="form-select" id="editGender" required>
+                                    <option value="MALE">Male</option>
+                                    <option value="FEMALE">Female</option>
+                                    <option value="OTHER">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Blood Group</label>
+                                <select class="form-select" id="editBloodGroup">
+                                    <option value="">Select...</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Contact Number</label>
+                                <input type="tel" class="form-control" id="editContact" required
+                                       pattern="[0-9]{10}" maxlength="10" title="Exactly 10 digits">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" id="editEmail">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Address</label>
+                                <textarea class="form-control" id="editAddress" rows="2" minlength="10" title="Minimum 10 characters"></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Emergency Contact</label>
+                                <input type="text" class="form-control" id="editEmergencyName"
+                                       pattern="[A-Za-z\s]+" minlength="3" title="Only letters and spaces, minimum 3 characters">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Emergency Phone</label>
+                                <input type="tel" class="form-control" id="editEmergencyPhone"
+                                       pattern="[0-9]{10}" maxlength="10" title="Exactly 10 digits">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Allergies</label>
+                                <textarea class="form-control" id="editAllergies" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary" id="savePatientBtn">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../js/config.js"></script>
+    <script src="../../js/api.js"></script>
+    <script src="../../js/utils.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script>
+        if (!Auth.requireRole([CONFIG.ROLES.RECEPTIONIST])) {
+            window.location.href = '../../index.html';
+        }
+
+        let allPatients = [];
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Load all patients on page load
+            await loadAllPatients();
+
+            // Set max date for DOB to yesterday (must be in past)
+            const today = new Date();
+            today.setDate(today.getDate() - 1);
+            document.getElementById('editDob').max = today.toISOString().split('T')[0];
+
+            // Enable dynamic search on input
+            document.getElementById('searchInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') searchPatients();
+            });
+
+            // Enable dynamic filtering as user types (debounced)
+            document.getElementById('searchInput').addEventListener('input',
+                Utils.debounce(filterPatients, 300)
+            );
+
+            document.getElementById('editPatientForm').addEventListener('submit', handleUpdatePatient);
+
+            // Check for URL params (for booking flow)
+            const params = Utils.getUrlParams();
+            if (params.action === 'book' && params.patientId) {
+                // Patient was just registered, highlight option to book
+                Utils.showToast('Patient created! You can now book an appointment.', 'info');
+            }
+        });
+
+        async function loadAllPatients() {
+            const tbody = document.getElementById('patientsTableBody');
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Loading patients...</p></td></tr>`;
+
+            try {
+                allPatients = await PatientAPI.getAll();
+
+                // Ensure allPatients is an array
+                if (!Array.isArray(allPatients)) {
+                    console.error('Patients response is not an array:', allPatients);
+                    allPatients = [];
+                }
+
+                displayPatients(allPatients);
+            } catch (error) {
+                console.error('Error loading patients:', error);
+                const errorMessage = Utils.extractErrorMessage(error, 'Failed to load patients');
+                tbody.innerHTML = `<tr><td colspan="7">${Utils.getErrorState(errorMessage + '. Please try again.')}</td></tr>`;
+            }
+        }
+
+        async function searchPatients() {
+            const query = document.getElementById('searchInput').value.trim();
+            const tbody = document.getElementById('patientsTableBody');
+
+            // If no query, show all patients
+            if (!query) {
+                displayPatients(allPatients);
+                return;
+            }
+
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>';
+
+            try {
+                const patients = await PatientAPI.search(query);
+
+                // Ensure patients is an array
+                if (!Array.isArray(patients)) {
+                    console.error('Search response is not an array:', patients);
+                    displayPatients([]);
+                    return;
+                }
+
+                displayPatients(patients);
+            } catch (error) {
+                console.error('Search error:', error);
+                const errorMessage = Utils.extractErrorMessage(error, 'Search failed');
+                tbody.innerHTML = `<tr><td colspan="7">${Utils.getErrorState(errorMessage + '. Please try again.')}</td></tr>`;
+            }
+        }
+
+        function filterPatients() {
+            const query = document.getElementById('searchInput').value.trim().toLowerCase();
+
+            // If no query, show all patients
+            if (!query) {
+                displayPatients(allPatients);
+                return;
+            }
+
+            // Filter locally for quick response
+            const filtered = allPatients.filter(p => {
+                const mrn = (p.mrn || '').toLowerCase();
+                const name = (p.fullName || '').toLowerCase();
+                const email = (p.email || '').toLowerCase();
+                const phone = (p.contactNumber || '').toLowerCase();
+
+                return mrn.includes(query) ||
+                       name.includes(query) ||
+                       email.includes(query) ||
+                       phone.includes(query);
+            });
+
+            displayPatients(filtered);
+        }
+
+        function displayPatients(patients) {
+            const tbody = document.getElementById('patientsTableBody');
+            const countBadge = document.getElementById('patientCount');
+
+            countBadge.textContent = `${patients.length} patient${patients.length !== 1 ? 's' : ''}`;
+
+            if (!patients || patients.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7">${Utils.getEmptyState('No patients found', 'bi-person-x')}</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = patients.map(p => `
+                <tr>
+                    <td><code class="fw-bold">${p.mrn || 'N/A'}</code></td>
+                    <td><strong>${Utils.escapeHtml(p.fullName)}</strong></td>
+                    <td>${Utils.formatDateDisplay(p.dateOfBirth)}</td>
+                    <td>${p.gender || '-'}</td>
+                    <td>${p.contactNumber || '-'}</td>
+                    <td>${p.active !== false ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="editPatient(${p.patientId})" title="View/Edit Details">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <a href="appointments.html?action=book&patientId=${p.patientId}" class="btn btn-sm btn-success" title="Book Appointment">
+                            <i class="bi bi-calendar-plus me-1"></i>Book
+                        </a>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function editPatient(patientId) {
+            try {
+                const patient = await PatientAPI.getById(patientId);
+
+                document.getElementById('editPatientId').value = patient.patientId;
+                document.getElementById('editFullName').value = patient.fullName || '';
+                document.getElementById('editMrn').value = patient.mrn || '';
+                document.getElementById('editDob').value = patient.dateOfBirth || '';
+                document.getElementById('editGender').value = patient.gender || '';
+                document.getElementById('editBloodGroup').value = patient.bloodGroup || '';
+                document.getElementById('editContact').value = patient.contactNumber || '';
+                document.getElementById('editEmail').value = patient.email || '';
+                document.getElementById('editAddress').value = patient.address || '';
+                document.getElementById('editEmergencyName').value = patient.emergencyContactName || '';
+                document.getElementById('editEmergencyPhone').value = patient.emergencyPhone || '';
+                document.getElementById('editAllergies').value = patient.allergies || '';
+
+                new bootstrap.Modal(document.getElementById('patientModal')).show();
+            } catch (error) {
+                console.error('Error loading patient:', error);
+                Utils.showToast('Failed to load patient details', 'error');
+            }
+        }
+
+        async function handleUpdatePatient(e) {
+            e.preventDefault();
+
+            const patientId = document.getElementById('editPatientId').value;
+            const btn = document.getElementById('savePatientBtn');
+
+            // Validate DOB
+            const dobValue = document.getElementById('editDob').value;
+            if (dobValue) {
+                const dob = new Date(dobValue);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                if (dob >= today) {
+                    Utils.showToast('Enter correct DOB - Date of birth must be in the past', 'error');
+                    document.getElementById('editDob').focus();
+                    return;
+                }
+            }
+
+            // Validate fields
+            const fullName = document.getElementById('editFullName').value.trim();
+            if (!/^[A-Za-z\s]+$/.test(fullName) || fullName.length < 3) {
+                Utils.showToast('Full Name must contain only letters and spaces, minimum 3 characters.', 'error');
+                return;
+            }
+
+            const contact = document.getElementById('editContact').value.trim();
+            if (!/^[0-9]{10}$/.test(contact)) {
+                Utils.showToast('Contact Number must be exactly 10 digits.', 'error');
+                return;
+            }
+
+            const address = document.getElementById('editAddress').value.trim();
+            if (address && address.length < 10) {
+                Utils.showToast('Address must be at least 10 characters.', 'error');
+                return;
+            }
+
+            const emergencyName = document.getElementById('editEmergencyName').value.trim();
+            if (emergencyName && (!/^[A-Za-z\s]+$/.test(emergencyName) || emergencyName.length < 3)) {
+                Utils.showToast('Emergency Contact Name must contain only letters and spaces, minimum 3 characters.', 'error');
+                return;
+            }
+
+            const emergencyPhone = document.getElementById('editEmergencyPhone').value.trim();
+            if (emergencyPhone && !/^[0-9]{10}$/.test(emergencyPhone)) {
+                Utils.showToast('Emergency Phone must be exactly 10 digits.', 'error');
+                return;
+            }
+
+            const data = {
+                fullName: document.getElementById('editFullName').value.trim(),
+                dateOfBirth: document.getElementById('editDob').value,
+                gender: document.getElementById('editGender').value,
+                bloodGroup: document.getElementById('editBloodGroup').value || null,
+                contactNumber: document.getElementById('editContact').value.trim(),
+                email: document.getElementById('editEmail').value.trim() || null,
+                address: document.getElementById('editAddress').value.trim() || null,
+                emergencyContactName: document.getElementById('editEmergencyName').value.trim() || null,
+                emergencyPhone: document.getElementById('editEmergencyPhone').value.trim() || null,
+                allergies: document.getElementById('editAllergies').value.trim() || null
+            };
+
+            Utils.setButtonLoading(btn, true);
+
+            try {
+                await PatientAPI.updateDemographics(patientId, data);
+                Utils.showToast('Patient updated successfully', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('patientModal')).hide();
+
+                // Refresh the patient list
+                await loadAllPatients();
+
+                // Re-apply filter if there was a search
+                const query = document.getElementById('searchInput').value.trim();
+                if (query) {
+                    filterPatients();
+                }
+            } catch (error) {
+                console.error('Update error:', error);
+                const errorMessage = Utils.extractErrorMessage(error, 'Failed to update patient');
+                Utils.showToast(errorMessage, 'error');
+            } finally {
+                Utils.setButtonLoading(btn, false);
+            }
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('show');
+            document.getElementById('sidebarOverlay').classList.toggle('show');
+        }
+
+        function handleLogout() {
+            Auth.logout();
+            window.location.href = '../../index.html';
+        }
+    </script>
+</body>
+</html>
+

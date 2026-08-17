@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoices - Billing Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../../css/style.css" rel="stylesheet">
+    <link href="../../css/dashboard.css" rel="stylesheet">
+    <style>
+        /* Patient Search Results Dropdown */
+        .patient-search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            z-index: 1050;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-top: none;
+            border-radius: 0 0 0.375rem 0.375rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+        .patient-search-results.show {
+            display: block;
+        }
+        .patient-result-item {
+            padding: 10px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .patient-result-item:hover {
+            background: #f8f9fa;
+        }
+        .patient-result-item:last-child {
+            border-bottom: none;
+        }
+        .patient-result-item .patient-name {
+            font-weight: 600;
+            color: #333;
+        }
+        .patient-result-item .patient-mrn {
+            font-size: 0.85em;
+            color: #6c757d;
+        }
+        .patient-result-item .patient-details {
+            font-size: 0.8em;
+            color: #999;
+            margin-top: 2px;
+        }
+        .patient-search-results .no-results,
+        .patient-search-results .search-error {
+            padding: 15px;
+            text-align: center;
+            color: #6c757d;
+        }
+        .patient-search-results .search-error {
+            color: #dc3545;
+        }
+        .selected-patient-card {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            border: 1px solid #bbdefb;
+            border-radius: 8px;
+            padding: 12px 15px;
+        }
+        .selected-patient-card .patient-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .selected-patient-card .patient-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #1976d2;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+        }
+        .selected-patient-card .patient-text .name {
+            font-weight: 600;
+            color: #1565c0;
+        }
+        .selected-patient-card .patient-text .mrn {
+            font-size: 0.85em;
+            color: #666;
+        }
+        .selected-patient-card .clear-btn {
+            margin-left: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <i class="bi bi-hospital logo-icon"></i>
+                <h4>Patient Care System</h4>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-section">Main Menu</li>
+                <li><a href="dashboard.html"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                <li><a href="invoices.html" class="active"><i class="bi bi-receipt"></i> Invoices</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <button class="logout-btn" onclick="handleLogout()">
+                    <i class="bi bi-box-arrow-left"></i> Logout
+                </button>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <header class="top-navbar">
+                <button class="sidebar-toggle" onclick="toggleSidebar()">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h1 class="page-title">Invoices</h1>
+                <div class="navbar-right">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createInvoiceModal">
+                        <i class="bi bi-plus-lg me-2"></i>Create Invoice
+                    </button>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <!-- Filter Tabs -->
+                <ul class="nav nav-tabs mb-4" id="invoiceTabs">
+                    <li class="nav-item"><a class="nav-link active" data-filter="all" href="#">All</a></li>
+                    <li class="nav-item"><a class="nav-link" data-filter="UNPAID" href="#">Pending</a></li>
+                    <li class="nav-item"><a class="nav-link" data-filter="PAID" href="#">Paid</a></li>
+                </ul>
+
+                <!-- Invoices Table -->
+                <div class="data-card">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Invoice #</th>
+                                        <th>Date</th>
+                                        <th>Patient</th>
+                                        <th>Total</th>
+                                        <th>Paid</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="invoicesTable">
+                                    <tr><td colspan="9" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <!-- Create Invoice Modal -->
+    <div class="modal fade" id="createInvoiceModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-receipt me-2"></i>Create Invoice</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="invoiceForm">
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Search Patient by MRN <span class="text-danger">*</span></label>
+                                <div class="position-relative" id="patientSearchContainer">
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                        <input type="text" class="form-control" id="patientMrnSearch"
+                                               placeholder="Enter MRN (e.g., MRN-001)"
+                                               autocomplete="off">
+                                        <span class="input-group-text d-none" id="searchSpinner">
+                                            <span class="spinner-border spinner-border-sm"></span>
+                                        </span>
+                                    </div>
+                                    <div id="patientResults" class="patient-search-results"></div>
+                                </div>
+                                <input type="hidden" id="patientId">
+                                <div id="selectedPatient" class="mt-2"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Invoice Date</label>
+                                <input type="date" class="form-control" id="invoiceDate" required>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+                        <h6>Invoice Items</h6>
+                        <div id="itemsContainer"></div>
+                        <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addInvoiceItem()">
+                            <i class="bi bi-plus-lg me-1"></i>Add Item
+                        </button>
+
+                        <!-- Items Summary Table -->
+                        <div id="itemsSummary" class="mt-3" style="display: none;">
+                            <h6 class="text-muted"><i class="bi bi-list-check me-1"></i>Items Summary</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Service/Description</th>
+                                            <th class="text-center" style="width: 80px;">Qty</th>
+                                            <th class="text-end" style="width: 120px;">Unit Price</th>
+                                            <th class="text-end" style="width: 120px;">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="itemsSummaryBody"></tbody>
+                                    <tfoot class="table-light">
+                                        <tr>
+                                            <td colspan="3" class="text-end fw-bold">Total:</td>
+                                            <td class="text-end fw-bold" id="itemsTotalAmount">$0.00</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Total Amount</label>
+                                <input type="text" class="form-control fw-bold" id="totalAmount" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="createInvoiceBtn">Create Invoice</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Record Payment Modal -->
+    <div class="modal fade" id="paymentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-cash me-2"></i>Record Payment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="paymentForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="payInvoiceId">
+                        <p>Invoice: <strong id="payInvoiceNumber"></strong></p>
+                        <p>Outstanding: <strong id="payOutstanding" class="text-danger"></strong></p>
+                        <div class="mb-3">
+                            <label class="form-label">Amount <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="payAmount" step="0.01" min="0.01" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Payment Method <span class="text-danger">*</span></label>
+                            <select class="form-select" id="payMethod" required>
+                                <option value="CASH">Cash</option>
+                                <option value="CARD">Credit/Debit Card</option>
+                                <option value="INSURANCE">Insurance</option>
+                                <option value="BANK_TRANSFER">Bank Transfer</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Reference Number</label>
+                            <input type="text" class="form-control" id="payReference">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success" id="payBtn">Record Payment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Invoice Modal -->
+    <div class="modal fade" id="viewInvoiceModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Invoice Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="viewInvoiceContent"></div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../js/config.js"></script>
+    <script src="../../js/api.js"></script>
+    <script src="../../js/utils.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script>
+        if (!Auth.requireRole([CONFIG.ROLES.BILLING_OFFICER])) {
+            window.location.href = '../../index.html';
+        }
+
+        let allInvoices = [];
+        let patients = {};
+        let itemCount = 0;
+        let selectedPatientData = null;
+        let searchTimeout = null;
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            document.getElementById('invoiceDate').value = Utils.getToday();
+            await loadInvoices();
+            addInvoiceItem();
+            setupTabs();
+            setupMrnSearch();
+
+            document.getElementById('invoiceForm').addEventListener('submit', handleCreateInvoice);
+            document.getElementById('paymentForm').addEventListener('submit', handlePayment);
+
+            // Reset patient selection when modal is hidden
+            document.getElementById('createInvoiceModal').addEventListener('hidden.bs.modal', function() {
+                clearPatientSelection();
+                document.getElementById('itemsContainer').innerHTML = '';
+                document.getElementById('itemsSummary').style.display = 'none';
+                document.getElementById('itemsSummaryBody').innerHTML = '';
+                itemCount = 0;
+                addInvoiceItem();
+                document.getElementById('totalAmount').value = '';
+            });
+
+            // Check URL params
+            const params = Utils.getUrlParams();
+            if (params.action === 'create') {
+                new bootstrap.Modal(document.getElementById('createInvoiceModal')).show();
+            }
+            if (params.filter === 'unpaid') {
+                filterInvoices('UNPAID');
+                document.querySelector('[data-filter="UNPAID"]').classList.add('active');
+                document.querySelector('[data-filter="all"]').classList.remove('active');
+            }
+            if (params.pay) {
+                openPayment(parseInt(params.pay));
+            }
+
+            // Close results when clicking outside
+            document.addEventListener('click', function(e) {
+                const container = document.getElementById('patientSearchContainer');
+                if (container && !container.contains(e.target)) {
+                    hidePatientResults();
+                }
+            });
+        });
+
+        // ==================== MRN SEARCH FUNCTIONALITY ====================
+
+        function setupMrnSearch() {
+            const searchInput = document.getElementById('patientMrnSearch');
+
+            // Debounced search on input
+            searchInput.addEventListener('input', function() {
+                const query = this.value.trim();
+
+                // Clear previous timeout
+                if (searchTimeout) {
+                    clearTimeout(searchTimeout);
+                }
+
+                // Don't search if patient already selected
+                if (selectedPatientData) {
+                    return;
+                }
+
+                // Clear results if empty
+                if (!query) {
+                    hidePatientResults();
+                    return;
+                }
+
+                // Debounce - wait 300ms before searching
+                searchTimeout = setTimeout(() => {
+                    searchPatientByMrn(query);
+                }, 300);
+            });
+
+            // Handle focus to show results again
+            searchInput.addEventListener('focus', function() {
+                if (!selectedPatientData && this.value.trim()) {
+                    searchPatientByMrn(this.value.trim());
+                }
+            });
+        }
+
+        async function searchPatientByMrn(query) {
+            const resultsDiv = document.getElementById('patientResults');
+            const spinner = document.getElementById('searchSpinner');
+
+            // Show loading spinner
+            spinner.classList.remove('d-none');
+            resultsDiv.classList.add('show');
+            resultsDiv.innerHTML = '<div class="no-results"><span class="spinner-border spinner-border-sm me-2"></span>Searching...</div>';
+
+            try {
+                // Search by MRN - try exact match first
+                let results = [];
+
+                try {
+                    // Try to get patient by exact MRN
+                    const patient = await PatientAPI.getByMrn(query);
+                    if (patient) {
+                        results = [patient];
+                    }
+                } catch (e) {
+                    // If exact match fails, try search API
+                    results = await PatientAPI.search(query);
+                    // Filter to only show MRN matches
+                    results = results.filter(p =>
+                        p.mrn && p.mrn.toLowerCase().includes(query.toLowerCase())
+                    );
+                }
+
+                spinner.classList.add('d-none');
+
+                if (results.length === 0) {
+                    resultsDiv.innerHTML = `
+                        <div class="no-results">
+                            <i class="bi bi-search me-2"></i>No patient found with MRN "${Utils.escapeHtml(query)}"
+                        </div>`;
+                } else {
+                    displayPatientResults(results.slice(0, 5));
+                }
+            } catch (error) {
+                spinner.classList.add('d-none');
+                resultsDiv.innerHTML = `
+                    <div class="search-error">
+                        <i class="bi bi-exclamation-circle me-2"></i>Search failed. Please try again.
+                    </div>`;
+                console.error('Search error:', error);
+            }
+        }
+
+        function displayPatientResults(patientList) {
+            const resultsDiv = document.getElementById('patientResults');
+
+            resultsDiv.innerHTML = patientList.map(p => {
+                const age = p.dateOfBirth ? Utils.calculateAge(p.dateOfBirth) : 'N/A';
+                const gender = p.gender || 'N/A';
+                const contact = p.phone || p.email || 'No contact';
+
+                return `
+                    <div class="patient-result-item" onclick="selectPatientFromSearch(${p.patientId})">
+                        <div class="patient-name">${Utils.escapeHtml(p.fullName)}</div>
+                        <div class="patient-mrn"><i class="bi bi-upc me-1"></i>${Utils.escapeHtml(p.mrn || 'N/A')}</div>
+                        <div class="patient-details">
+                            <span><i class="bi bi-person me-1"></i>${age} yrs, ${gender}</span>
+                            <span class="ms-3"><i class="bi bi-telephone me-1"></i>${Utils.escapeHtml(contact)}</span>
+                        </div>
+                    </div>`;
+            }).join('');
+
+            resultsDiv.classList.add('show');
+        }
+
+        async function selectPatientFromSearch(patientId) {
+            try {
+                // Fetch full patient details
+                const patient = await PatientAPI.getById(patientId);
+                selectedPatientData = patient;
+                patients[patientId] = patient;
+
+                // Store patient ID
+                document.getElementById('patientId').value = patientId;
+
+                // Hide search input and show selected patient
+                document.getElementById('patientSearchContainer').style.display = 'none';
+
+                const age = patient.dateOfBirth ? Utils.calculateAge(patient.dateOfBirth) : 'N/A';
+
+                document.getElementById('selectedPatient').innerHTML = `
+                    <div class="selected-patient-card">
+                        <div class="patient-info">
+                            <div class="patient-icon">
+                                <i class="bi bi-person-fill"></i>
+                            </div>
+                            <div class="patient-text">
+                                <div class="name">${Utils.escapeHtml(patient.fullName)}</div>
+                                <div class="mrn">MRN: ${Utils.escapeHtml(patient.mrn || 'N/A')} | Age: ${age} | ${patient.gender || 'N/A'}</div>
+                            </div>
+                            <button type="button" class="btn btn-outline-secondary btn-sm clear-btn" onclick="clearPatientSelection()">
+                                <i class="bi bi-x-lg me-1"></i>Change Patient
+                            </button>
+                        </div>
+                    </div>`;
+
+                hidePatientResults();
+                Utils.showToast(`Patient ${patient.fullName} selected`, 'success');
+
+            } catch (error) {
+                Utils.showToast('Failed to load patient details', 'error');
+            }
+        }
+
+        function clearPatientSelection() {
+            selectedPatientData = null;
+            document.getElementById('patientId').value = '';
+            document.getElementById('selectedPatient').innerHTML = '';
+            document.getElementById('patientSearchContainer').style.display = 'block';
+            document.getElementById('patientMrnSearch').value = '';
+            document.getElementById('patientMrnSearch').focus();
+        }
+
+        function hidePatientResults() {
+            document.getElementById('patientResults').classList.remove('show');
+        }
+
+        async function loadInvoices() {
+            try {
+                allInvoices = await BillingAPI.getAllInvoices();
+                await loadPatientDetails(allInvoices);
+                displayInvoices(allInvoices);
+            } catch (error) {
+                document.getElementById('invoicesTable').innerHTML = `<tr><td colspan="7">${Utils.getErrorState('Failed to load')}</td></tr>`;
+            }
+        }
+
+        async function loadPatientDetails(invoices) {
+            const patientIds = [...new Set(invoices.map(i => i.patientId))];
+            for (const pid of patientIds) {
+                if (!patients[pid]) {
+                    try { patients[pid] = await PatientAPI.getById(pid); }
+                    catch (e) { patients[pid] = { fullName: 'Unknown' }; }
+                }
+            }
+        }
+
+        function setupTabs() {
+            document.querySelectorAll('#invoiceTabs .nav-link').forEach(tab => {
+                tab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.querySelectorAll('#invoiceTabs .nav-link').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    filterInvoices(this.dataset.filter);
+                });
+            });
+        }
+
+        function filterInvoices(filter) {
+            let filtered = filter === 'all' ? allInvoices : allInvoices.filter(i => i.paymentStatus === filter);
+            displayInvoices(filtered);
+        }
+
+        function displayInvoices(invoices) {
+            const tbody = document.getElementById('invoicesTable');
+            if (invoices.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7">${Utils.getEmptyState('No invoices', 'bi-receipt')}</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = invoices.map(inv => {
+                const patient = patients[inv.patientId] || { fullName: 'Unknown' };
+                const canDelete = inv.paymentStatus === 'UNPAID' && (!inv.amountPaid || inv.amountPaid === 0);
+                return `<tr>
+                    <td><strong>${inv.invoiceNumber}</strong></td>
+                    <td>${Utils.formatDateDisplay(inv.invoiceDate)}</td>
+                    <td>${Utils.escapeHtml(patient.fullName)}</td>
+                    <td>${Utils.formatCurrency(inv.totalAmount)}</td>
+                    <td>${Utils.formatCurrency(inv.amountPaid)}</td>
+                    <td>${Utils.getStatusBadge(inv.paymentStatus)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="viewInvoice(${inv.invoiceId})" title="View"><i class="bi bi-eye"></i></button>
+                        ${inv.paymentStatus !== 'PAID' ? `<button class="btn btn-sm btn-success me-1" onclick="openPayment(${inv.invoiceId})" title="Record Payment"><i class="bi bi-cash"></i></button>` : ''}
+                        ${canDelete ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteInvoice(${inv.invoiceId}, '${Utils.escapeHtml(inv.invoiceNumber)}')" title="Delete Invoice"><i class="bi bi-trash"></i></button>` : ''}
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+
+        function addInvoiceItem() {
+            itemCount++;
+            const container = document.getElementById('itemsContainer');
+            const itemHtml = `
+                <div class="row g-2 mb-2 item-row" id="item${itemCount}">
+                    <div class="col-md-5">
+                        <input type="text" class="form-control item-desc" placeholder="Service/Description" required onblur="calculateTotals()">
+                    </div>
+                    <div class="col-md-2">
+                        <input type="number" class="form-control item-qty" placeholder="Qty" value="1" min="1" onchange="calculateTotals()" oninput="calculateTotals()">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="number" class="form-control item-price" placeholder="Unit Price" step="0.01" min="0" onchange="calculateTotals()" oninput="calculateTotals()">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeItem(${itemCount})"><i class="bi bi-trash"></i></button>
+                    </div>
+                </div>
+            `;
+            // Use insertAdjacentHTML to preserve existing input values
+            container.insertAdjacentHTML('beforeend', itemHtml);
+        }
+
+        function removeItem(id) {
+            document.getElementById(`item${id}`).remove();
+            calculateTotals();
+        }
+
+        function calculateTotals() {
+            let subtotal = 0;
+            const itemsSummaryBody = document.getElementById('itemsSummaryBody');
+            const itemsSummary = document.getElementById('itemsSummary');
+            let summaryRows = '';
+            let validItemCount = 0;
+
+            document.querySelectorAll('.item-row').forEach(row => {
+                const desc = row.querySelector('.item-desc').value.trim();
+                const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+                const price = parseFloat(row.querySelector('.item-price').value) || 0;
+                const amount = qty * price;
+                subtotal += amount;
+
+                // Add to summary if item has description and valid amount
+                if (desc && qty > 0 && price > 0) {
+                    validItemCount++;
+                    summaryRows += `
+                        <tr>
+                            <td>${Utils.escapeHtml(desc)}</td>
+                            <td class="text-center">${qty}</td>
+                            <td class="text-end">${Utils.formatCurrency(price)}</td>
+                            <td class="text-end">${Utils.formatCurrency(amount)}</td>
+                        </tr>`;
+                }
+            });
+
+            document.getElementById('totalAmount').value = Utils.formatCurrency(subtotal);
+
+            // Update items summary
+            if (validItemCount > 0) {
+                itemsSummaryBody.innerHTML = summaryRows;
+                document.getElementById('itemsTotalAmount').textContent = Utils.formatCurrency(subtotal);
+                itemsSummary.style.display = 'block';
+            } else {
+                itemsSummary.style.display = 'none';
+            }
+        }
+
+        async function handleCreateInvoice(e) {
+            e.preventDefault();
+
+            // Validate patient selection
+            const patientId = document.getElementById('patientId').value;
+            if (!patientId) {
+                Utils.showToast('Please select a patient using MRN search', 'warning');
+                document.getElementById('patientMrnSearch').focus();
+                return;
+            }
+
+            // Validate invoice date
+            const invoiceDate = document.getElementById('invoiceDate').value;
+            if (!invoiceDate) {
+                Utils.showToast('Please select an invoice date', 'warning');
+                return;
+            }
+
+            // Collect and validate items
+            const items = [];
+            const itemRows = document.querySelectorAll('.item-row');
+            let hasInvalidItem = false;
+
+            itemRows.forEach((row, index) => {
+                const desc = row.querySelector('.item-desc').value.trim();
+                const qty = parseInt(row.querySelector('.item-qty').value) || 0;
+                const price = parseFloat(row.querySelector('.item-price').value) || 0;
+
+                if (desc && qty > 0 && price > 0) {
+                    items.push({
+                        serviceName: desc,  // Backend expects serviceName, not description
+                        quantity: qty,
+                        unitPrice: price
+                    });
+                } else if (desc || price > 0) {
+                    // Partial data entered - show warning
+                    hasInvalidItem = true;
+                }
+            });
+
+            if (hasInvalidItem) {
+                Utils.showToast('Please complete all item fields (description, quantity > 0, price > 0)', 'warning');
+                return;
+            }
+
+            if (items.length === 0) {
+                Utils.showToast('Please add at least one valid item with description, quantity and price', 'warning');
+                return;
+            }
+
+            // Calculate totals
+            const totalAmount = items.reduce((sum, i) => sum + (i.quantity * i.unitPrice), 0);
+
+            const btn = document.getElementById('createInvoiceBtn');
+            Utils.setButtonLoading(btn, true);
+
+            try {
+                const invoiceData = {
+                    patientId: parseInt(patientId),
+                    items: items
+                };
+
+                await BillingAPI.generateInvoice(invoiceData);
+
+                Utils.showToast('Invoice created successfully!', 'success');
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('createInvoiceModal')).hide();
+                document.getElementById('invoiceForm').reset();
+                document.getElementById('itemsContainer').innerHTML = '';
+                clearPatientSelection();
+                itemCount = 0;
+                addInvoiceItem();
+                await loadInvoices();
+            } catch (error) {
+                const errorMessage = Utils.extractErrorMessage(error, 'Failed to create invoice');
+                Utils.showToast(errorMessage, 'error');
+                console.error('Invoice creation error:', error);
+            } finally {
+                Utils.setButtonLoading(btn, false);
+            }
+        }
+
+        async function openPayment(invoiceId) {
+            const inv = allInvoices.find(i => i.invoiceId === invoiceId);
+            if (!inv) {
+                try {
+                    const invoice = await BillingAPI.getInvoiceById(invoiceId);
+                    showPaymentModal(invoice);
+                } catch (e) {
+                    Utils.showToast('Invoice not found', 'error');
+                }
+            } else {
+                showPaymentModal(inv);
+            }
+        }
+
+        function showPaymentModal(inv) {
+            const outstanding = (inv.patientPayable || 0) - (inv.amountPaid || 0);
+            document.getElementById('payInvoiceId').value = inv.invoiceId;
+            document.getElementById('payInvoiceNumber').textContent = inv.invoiceNumber;
+            document.getElementById('payOutstanding').textContent = Utils.formatCurrency(outstanding);
+            document.getElementById('payAmount').max = outstanding;
+            document.getElementById('payAmount').value = outstanding;
+            new bootstrap.Modal(document.getElementById('paymentModal')).show();
+        }
+
+        async function handlePayment(e) {
+            e.preventDefault();
+            const btn = document.getElementById('payBtn');
+            Utils.setButtonLoading(btn, true);
+
+            try {
+                await BillingAPI.recordPayment(document.getElementById('payInvoiceId').value, {
+                    amount: parseFloat(document.getElementById('payAmount').value),
+                    paymentMethod: document.getElementById('payMethod').value,
+                    referenceNumber: document.getElementById('payReference').value || null,
+                    paymentDate: Utils.getToday()
+                });
+
+                Utils.showToast('Payment recorded successfully!', 'success');
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('paymentModal')).hide();
+                await loadInvoices();
+            } catch (error) {
+                const errorMessage = Utils.extractErrorMessage(error, 'Failed to record payment');
+                Utils.showToast(errorMessage, 'error');
+            } finally {
+                Utils.setButtonLoading(btn, false);
+            }
+        }
+
+        async function viewInvoice(id) {
+            try {
+                const inv = await BillingAPI.getInvoiceById(id);
+                const patient = patients[inv.patientId] || { fullName: 'Unknown' };
+                const payments = await BillingAPI.getInvoicePayments(id).catch(() => []);
+
+                let itemsHtml = '';
+                if (inv.items && inv.items.length > 0) {
+                    itemsHtml = `<h6 class="mt-4">Items</h6><table class="table table-sm"><thead><tr><th>Service/Description</th><th>Qty</th><th>Unit Price</th><th>Amount</th></tr></thead><tbody>
+                        ${inv.items.map(i => `<tr><td>${i.serviceName || i.description || 'N/A'}</td><td>${i.quantity}</td><td>${Utils.formatCurrency(i.unitPrice)}</td><td>${Utils.formatCurrency(i.amount || i.totalPrice || (i.quantity * i.unitPrice))}</td></tr>`).join('')}
+                    </tbody></table>`;
+                }
+
+                let paymentsHtml = '';
+                if (payments.length > 0) {
+                    paymentsHtml = `<h6 class="mt-4">Payments</h6><table class="table table-sm"><thead><tr><th>Date</th><th>Amount</th><th>Method</th></tr></thead><tbody>
+                        ${payments.map(p => `<tr><td>${Utils.formatDateDisplay(p.paymentDate)}</td><td>${Utils.formatCurrency(p.amount)}</td><td>${p.paymentMethod}</td></tr>`).join('')}
+                    </tbody></table>`;
+                }
+
+                document.getElementById('viewInvoiceContent').innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Invoice #:</strong> ${inv.invoiceNumber}</p>
+                            <p><strong>Date:</strong> ${Utils.formatDateDisplay(inv.invoiceDate)}</p>
+                            <p><strong>Patient:</strong> ${patient.fullName}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Total Amount:</strong> ${Utils.formatCurrency(inv.totalAmount)}</p>
+                            <p><strong>Paid:</strong> ${Utils.formatCurrency(inv.amountPaid)}</p>
+                            <p><strong>Payment Status:</strong> ${Utils.getStatusBadge(inv.paymentStatus)}</p>
+                        </div>
+                    </div>
+                    ${itemsHtml}
+                    ${paymentsHtml}
+                `;
+                new bootstrap.Modal(document.getElementById('viewInvoiceModal')).show();
+            } catch (e) {
+                Utils.showToast('Failed to load invoice', 'error');
+            }
+        }
+
+
+        async function deleteInvoice(invoiceId, invoiceNumber) {
+            const confirmed = await Utils.confirm(
+                'Delete Invoice',
+                `Are you sure you want to delete Invoice <strong>${invoiceNumber}</strong>?<br><br>
+                <span class="text-danger">This action cannot be undone.</span>`
+            );
+
+            if (!confirmed) return;
+
+            try {
+                await BillingAPI.deleteInvoice(invoiceId);
+                Utils.showToast('Invoice deleted successfully!', 'success');
+                await loadInvoices();
+            } catch (error) {
+                const errorMessage = Utils.extractErrorMessage(error, 'Failed to delete invoice');
+                Utils.showToast(errorMessage, 'error');
+            }
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('show');
+            document.getElementById('sidebarOverlay').classList.toggle('show');
+        }
+
+        function handleLogout() {
+            Auth.logout();
+            window.location.href = '../../index.html';
+        }
+    </script>
+</body>
+</html>
+

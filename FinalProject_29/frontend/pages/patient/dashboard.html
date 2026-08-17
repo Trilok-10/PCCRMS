@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Dashboard - Patient Care System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../../css/style.css" rel="stylesheet">
+    <link href="../../css/dashboard.css" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <i class="bi bi-hospital logo-icon"></i>
+                <h4>Patient Care System</h4>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-section">Main Menu</li>
+                <li><a href="dashboard.html" class="active"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                <li><a href="appointments.html"><i class="bi bi-calendar-check"></i> My Appointments</a></li>
+                <li><a href="medical-records.html"><i class="bi bi-file-medical"></i> Medical Records</a></li>
+                <li><a href="prescriptions.html"><i class="bi bi-capsule"></i> Prescriptions</a></li>
+                <li><a href="invoices.html"><i class="bi bi-receipt"></i> Bills & Invoices</a></li>
+                <li class="menu-section">Account</li>
+                <li><a href="profile.html"><i class="bi bi-person-circle"></i> My Profile</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <button class="logout-btn" onclick="handleLogout()">
+                    <i class="bi bi-box-arrow-left"></i> Logout
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Navbar -->
+            <header class="top-navbar">
+                <button class="sidebar-toggle" onclick="toggleSidebar()">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h1 class="page-title">Dashboard</h1>
+                <div class="navbar-right">
+                    <div class="user-dropdown dropdown">
+                        <div data-bs-toggle="dropdown">
+                            <div class="user-avatar" id="userAvatar">P</div>
+                        </div>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="profile.html"><i class="bi bi-person me-2"></i>Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="#" onclick="handleLogout()"><i class="bi bi-box-arrow-left me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="page-content">
+                <!-- Welcome Message -->
+                <div class="alert alert-primary mb-4">
+                    <h5 class="mb-1"><i class="bi bi-emoji-smile me-2"></i>Welcome back, <span id="welcomeName">Patient</span>!</h5>
+                    <p class="mb-0">Here's an overview of your health activities.</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="stat-icon primary">
+                                <i class="bi bi-calendar-check"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="upcomingAppointments">0</h3>
+                                <p>Upcoming Appointments</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="stat-icon success">
+                                <i class="bi bi-file-medical"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="totalRecords">0</h3>
+                                <p>Medical Records</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="stat-icon warning">
+                                <i class="bi bi-capsule"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="activePrescriptions">0</h3>
+                                <p>Active Prescriptions</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="stat-icon info">
+                                <i class="bi bi-receipt"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="pendingBills">0</h3>
+                                <p>Pending Bills</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="quick-actions">
+                            <a href="appointments.html" class="quick-action-btn">
+                                <i class="bi bi-calendar-check"></i>
+                                <span>View Appointments</span>
+                            </a>
+                            <a href="medical-records.html" class="quick-action-btn">
+                                <i class="bi bi-file-medical"></i>
+                                <span>View Records</span>
+                            </a>
+                            <a href="prescriptions.html" class="quick-action-btn">
+                                <i class="bi bi-capsule"></i>
+                                <span>My Prescriptions</span>
+                            </a>
+                            <a href="profile.html" class="quick-action-btn">
+                                <i class="bi bi-person-gear"></i>
+                                <span>Update Profile</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Appointments -->
+                <div class="row">
+                    <div class="col-lg-6 mb-4">
+                        <div class="data-card h-100">
+                            <div class="card-header">
+                                <h5><i class="bi bi-calendar me-2"></i>Upcoming Appointments</h5>
+                                <a href="appointments.html" class="btn btn-sm btn-outline-primary">View All</a>
+                            </div>
+                            <div class="card-body" id="upcomingAppointmentsList">
+                                <div class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 mb-4">
+                        <div class="data-card h-100">
+                            <div class="card-header">
+                                <h5><i class="bi bi-capsule me-2"></i>Recent Prescriptions</h5>
+                                <a href="prescriptions.html" class="btn btn-sm btn-outline-primary">View All</a>
+                            </div>
+                            <div class="card-body" id="recentPrescriptionsList">
+                                <div class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../js/config.js"></script>
+    <script src="../../js/api.js"></script>
+    <script src="../../js/utils.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script>
+        // Check authentication
+        if (!Auth.requireRole([CONFIG.ROLES.PATIENT])) {
+            window.location.href = '../../index.html';
+        }
+
+        let patientId = null;
+        let doctorsMap = {};
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', async function() {
+            const user = Auth.getUser();
+            document.getElementById('welcomeName').textContent = user.fullName || 'Patient';
+            document.getElementById('userAvatar').textContent = (user.fullName || 'P').charAt(0).toUpperCase();
+
+            // Get patient profile
+            await loadPatientProfile();
+
+            // Load dashboard data
+            await loadDoctors();
+            await loadDashboardData();
+        });
+
+        async function loadDoctors() {
+            try {
+                const doctors = await AuthAPI.getUsersByRole('DOCTOR');
+                doctors.forEach(doc => {
+                    doctorsMap[doc.id || doc.userId] = doc;
+                });
+            } catch (error) {
+                console.error('Error loading doctors:', error);
+            }
+        }
+
+        async function loadPatientProfile() {
+            try {
+                const userId = Auth.getUserId();
+                const patient = await PatientAPI.getByUserId(userId);
+                patientId = patient.patientId;
+                localStorage.setItem('patientId', patientId);
+            } catch (error) {
+                console.error('Error loading patient profile:', error);
+                // Patient profile might not exist yet
+            }
+        }
+
+        async function loadDashboardData() {
+            if (!patientId) {
+                document.getElementById('upcomingAppointmentsList').innerHTML = Utils.getEmptyState('Please complete your profile first', 'bi-person-x');
+                document.getElementById('recentPrescriptionsList').innerHTML = Utils.getEmptyState('Please complete your profile first', 'bi-person-x');
+                return;
+            }
+
+            try {
+                // Load appointments
+                const appointments = await AppointmentAPI.getByPatient(patientId);
+                const upcoming = appointments.filter(a => a.appointmentStatus === 'BOOKED');
+                document.getElementById('upcomingAppointments').textContent = upcoming.length;
+                displayUpcomingAppointments(upcoming.slice(0, 5));
+
+                // Load prescriptions
+                const prescriptions = await PharmacyAPI.getPatientPrescriptions(patientId);
+                const pending = prescriptions.filter(p => p.dispenseStatus === 'PENDING');
+                document.getElementById('activePrescriptions').textContent = pending.length;
+                displayRecentPrescriptions(prescriptions.slice(0, 5));
+
+                // Load medical records
+                try {
+                    const records = await EhrAPI.getPatientHistory(patientId);
+                    document.getElementById('totalRecords').textContent = records.length || 0;
+                } catch (e) {
+                    document.getElementById('totalRecords').textContent = '0';
+                }
+
+                // Load invoices
+                try {
+                    const invoices = await BillingAPI.getPatientInvoices(patientId);
+                    const pendingBills = invoices.filter(i => i.paymentStatus === 'PENDING' || i.paymentStatus === 'PARTIAL');
+                    document.getElementById('pendingBills').textContent = pendingBills.length;
+                } catch (e) {
+                    document.getElementById('pendingBills').textContent = '0';
+                }
+
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+
+        function displayUpcomingAppointments(appointments) {
+            const container = document.getElementById('upcomingAppointmentsList');
+
+            if (appointments.length === 0) {
+                container.innerHTML = Utils.getEmptyState('No upcoming appointments', 'bi-calendar-x');
+                return;
+            }
+
+            let html = '<div class="list-group list-group-flush">';
+            appointments.forEach(apt => {
+                const doctor = doctorsMap[apt.doctorId];
+                const doctorName = doctor ? 'Dr. ' + (doctor.fullName || '') : (apt.doctorName || 'Doctor');
+
+                html += `
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${Utils.formatDateDisplay(apt.appointmentDate)}</strong>
+                            <br><small class="text-muted">${Utils.formatTime(apt.appointmentTime)} - ${doctorName}</small>
+                        </div>
+                        <div class="text-end">
+                            <small class="text-muted">${apt.reasonForVisit || 'General Checkup'}</small>
+                            <br>${Utils.getStatusBadge(apt.appointmentStatus)}
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function displayRecentPrescriptions(prescriptions) {
+            const container = document.getElementById('recentPrescriptionsList');
+
+            if (prescriptions.length === 0) {
+                container.innerHTML = Utils.getEmptyState('No prescriptions found', 'bi-capsule');
+                return;
+            }
+
+            let html = '<div class="list-group list-group-flush">';
+            prescriptions.forEach(rx => {
+                html += `
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${rx.medicationName}</strong>
+                            <br><small class="text-muted">${rx.dosage} - ${rx.frequency}</small>
+                        </div>
+                        ${Utils.getStatusBadge(rx.dispenseStatus)}
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('show');
+            document.getElementById('sidebarOverlay').classList.toggle('show');
+        }
+
+        function handleLogout() {
+            Auth.logout();
+            window.location.href = '../../index.html';
+        }
+    </script>
+</body>
+</html>
+

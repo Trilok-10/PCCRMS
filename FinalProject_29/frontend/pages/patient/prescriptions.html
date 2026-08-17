@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Prescriptions - Patient Care System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../../css/style.css" rel="stylesheet">
+    <link href="../../css/dashboard.css" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <i class="bi bi-hospital logo-icon"></i>
+                <h4>Patient Care System</h4>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-section">Main Menu</li>
+                <li><a href="dashboard.html"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                <li><a href="appointments.html"><i class="bi bi-calendar-check"></i> My Appointments</a></li>
+                <li><a href="medical-records.html"><i class="bi bi-file-medical"></i> Medical Records</a></li>
+                <li><a href="prescriptions.html" class="active"><i class="bi bi-capsule"></i> Prescriptions</a></li>
+                <li><a href="invoices.html"><i class="bi bi-receipt"></i> Bills & Invoices</a></li>
+                <li class="menu-section">Account</li>
+                <li><a href="profile.html"><i class="bi bi-person-circle"></i> My Profile</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <button class="logout-btn" onclick="handleLogout()">
+                    <i class="bi bi-box-arrow-left"></i> Logout
+                </button>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <header class="top-navbar">
+                <button class="sidebar-toggle" onclick="toggleSidebar()">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h1 class="page-title">My Prescriptions</h1>
+                <div class="navbar-right"></div>
+            </header>
+
+            <div class="page-content">
+                <!-- Filter Tabs -->
+                <ul class="nav nav-tabs mb-4" id="prescriptionTabs">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-filter="all" href="#">All</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-filter="PENDING" href="#">Pending</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-filter="DISPENSED" href="#">Dispensed</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-filter="CANCELLED" href="#">Cancelled</a>
+                    </li>
+                </ul>
+
+                <div class="data-card">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Medication</th>
+                                        <th>Dosage</th>
+                                        <th>Frequency</th>
+                                        <th>Duration</th>
+                                        <th>Quantity</th>
+                                        <th>Status</th>
+                                        <th>Dispensed At</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="prescriptionsTableBody">
+                                    <tr>
+                                        <td colspan="7" class="text-center py-4">
+                                            <div class="spinner-border text-primary"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../js/config.js"></script>
+    <script src="../../js/api.js"></script>
+    <script src="../../js/utils.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script>
+        if (!Auth.requireRole([CONFIG.ROLES.PATIENT])) {
+            window.location.href = '../../index.html';
+        }
+
+        let allPrescriptions = [];
+        let patientId = localStorage.getItem('patientId');
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (!patientId) {
+                try {
+                    const patient = await PatientAPI.getByUserId(Auth.getUserId());
+                    patientId = patient.patientId;
+                    localStorage.setItem('patientId', patientId);
+                } catch (error) {
+                    document.getElementById('prescriptionsTableBody').innerHTML = `
+                        <tr><td colspan="7">${Utils.getEmptyState('Please complete your profile first', 'bi-person-x')}</td></tr>
+                    `;
+                    return;
+                }
+            }
+            await loadPrescriptions();
+            setupTabFilters();
+        });
+
+        async function loadPrescriptions() {
+            try {
+                allPrescriptions = await PharmacyAPI.getPatientPrescriptions(patientId);
+                displayPrescriptions(allPrescriptions);
+            } catch (error) {
+                document.getElementById('prescriptionsTableBody').innerHTML = `
+                    <tr><td colspan="7">${Utils.getEmptyState('No prescriptions found', 'bi-capsule')}</td></tr>
+                `;
+            }
+        }
+
+        function displayPrescriptions(prescriptions) {
+            const tbody = document.getElementById('prescriptionsTableBody');
+
+            if (!prescriptions || prescriptions.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7">${Utils.getEmptyState('No prescriptions found', 'bi-capsule')}</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = prescriptions.map(rx => `
+                <tr>
+                    <td><strong>${rx.medicationName}</strong></td>
+                    <td>${rx.dosage}</td>
+                    <td>${rx.frequency}</td>
+                    <td>${rx.duration || '-'}</td>
+                    <td>${rx.quantity || '-'}</td>
+                    <td>${Utils.getStatusBadge(rx.dispenseStatus)}</td>
+                    <td>${rx.dispensedAt ? Utils.formatDateDisplay(rx.dispensedAt) : '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function setupTabFilters() {
+            document.querySelectorAll('#prescriptionTabs .nav-link').forEach(tab => {
+                tab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.querySelectorAll('#prescriptionTabs .nav-link').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+
+                    const filter = this.dataset.filter;
+                    if (filter === 'all') {
+                        displayPrescriptions(allPrescriptions);
+                    } else {
+                        displayPrescriptions(allPrescriptions.filter(p => p.dispenseStatus === filter));
+                    }
+                });
+            });
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('show');
+            document.getElementById('sidebarOverlay').classList.toggle('show');
+        }
+
+        function handleLogout() {
+            Auth.logout();
+            window.location.href = '../../index.html';
+        }
+    </script>
+</body>
+</html>
+

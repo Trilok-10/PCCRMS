@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Invoices - Admin Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../../css/style.css" rel="stylesheet">
+    <link href="../../css/dashboard.css" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header"><i class="bi bi-hospital logo-icon"></i><h4>Patient Care System</h4></div>
+            <ul class="sidebar-menu">
+                <li class="menu-section">Administration</li>
+                <li><a href="dashboard.html"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                <li><a href="users.html"><i class="bi bi-people"></i> User Management</a></li>
+                <li><a href="create-user.html"><i class="bi bi-person-plus"></i> Create User</a></li>
+                <li class="menu-section">System Overview</li>
+                <li><a href="patients.html"><i class="bi bi-person-badge"></i> Patients</a></li>
+                <li><a href="appointments.html"><i class="bi bi-calendar-check"></i> Appointments</a></li>
+                <li><a href="prescriptions.html"><i class="bi bi-capsule"></i> Prescriptions</a></li>
+                <li><a href="invoices.html" class="active"><i class="bi bi-receipt"></i> Invoices</a></li>
+            </ul>
+            <div class="sidebar-footer"><button class="logout-btn" onclick="handleLogout()"><i class="bi bi-box-arrow-left"></i> Logout</button></div>
+        </nav>
+        <main class="main-content">
+            <header class="top-navbar">
+                <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+                <h1 class="page-title">All Invoices</h1>
+                <div class="navbar-right"></div>
+            </header>
+            <div class="page-content">
+                <ul class="nav nav-tabs mb-4" id="tabs">
+                    <li class="nav-item"><a class="nav-link active" data-filter="all" href="#">All</a></li>
+                    <li class="nav-item"><a class="nav-link" data-filter="PENDING" href="#">Pending</a></li>
+                    <li class="nav-item"><a class="nav-link" data-filter="PARTIAL" href="#">Partial</a></li>
+                    <li class="nav-item"><a class="nav-link" data-filter="PAID" href="#">Paid</a></li>
+                </ul>
+                <div class="data-card">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead><tr><th>Invoice #</th><th>Date</th><th>Patient</th><th>Total Amount</th><th>Paid</th><th>Status</th></tr></thead>
+                                <tbody id="dataTable"><tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../js/config.js"></script>
+    <script src="../../js/api.js"></script>
+    <script src="../../js/utils.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script>
+        if (!Auth.requireRole([CONFIG.ROLES.ADMIN])) window.location.href = '../../index.html';
+        let allData = [], patients = {};
+        document.addEventListener('DOMContentLoaded', async () => { await loadData(); setupTabs(); });
+        async function loadData() {
+            try {
+                allData = await BillingAPI.getAllInvoices();
+                const patientIds = [...new Set(allData.map(a => a.patientId))];
+                for(const pid of patientIds) { try { patients[pid] = await PatientAPI.getById(pid); } catch(e) { patients[pid] = {fullName:'Unknown'}; } }
+                displayData(allData);
+            } catch(e) { allData = []; displayData(allData); }
+        }
+        function setupTabs() {
+            document.querySelectorAll('#tabs .nav-link').forEach(tab => {
+                tab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.querySelectorAll('#tabs .nav-link').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    const filter = this.dataset.filter;
+                    displayData(filter === 'all' ? allData : allData.filter(r => r.paymentStatus === filter));
+                });
+            });
+        }
+        function displayData(items) {
+            const tbody = document.getElementById('dataTable');
+            if(!items.length) { tbody.innerHTML = `<tr><td colspan="6">${Utils.getEmptyState('No invoices')}</td></tr>`; return; }
+            tbody.innerHTML = items.map(i => {
+                const p = patients[i.patientId] || {fullName:'Unknown'};
+                return `<tr>
+                    <td><strong>${i.invoiceNumber}</strong></td>
+                    <td>${Utils.formatDateDisplay(i.invoiceDate)}</td>
+                    <td>${p.fullName}</td>
+                    <td>${Utils.formatCurrency(i.totalAmount)}</td>
+                    <td>${Utils.formatCurrency(i.amountPaid)}</td>
+                    <td>${Utils.getStatusBadge(i.paymentStatus)}</td>
+                </tr>`;
+            }).join('');
+        }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('show'); document.getElementById('sidebarOverlay').classList.toggle('show'); }
+        function handleLogout() { Auth.logout(); window.location.href = '../../index.html'; }
+    </script>
+</body>
+</html>
+

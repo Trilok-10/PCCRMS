@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Dashboard - Patient Care System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../../css/style.css" rel="stylesheet">
+    <link href="../../css/dashboard.css" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <i class="bi bi-hospital logo-icon"></i>
+                <h4>Patient Care System</h4>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-section">Main Menu</li>
+                <li><a href="dashboard.html" class="active"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                <li><a href="appointments.html"><i class="bi bi-calendar-check"></i> Appointments</a></li>
+                <li class="menu-section">Clinical</li>
+                <li><a href="create-encounter.html"><i class="bi bi-file-medical"></i> Create Encounter</a></li>
+                <li><a href="prescribe.html"><i class="bi bi-capsule"></i> Prescribe</a></li>
+                <li class="menu-section">Settings</li>
+                <li><a href="schedule.html"><i class="bi bi-clock"></i> My Schedule</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <button class="logout-btn" onclick="handleLogout()">
+                    <i class="bi bi-box-arrow-left"></i> Logout
+                </button>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <header class="top-navbar">
+                <button class="sidebar-toggle" onclick="toggleSidebar()">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h1 class="page-title">Dashboard</h1>
+                <div class="navbar-right">
+                    <div class="user-dropdown dropdown">
+                        <div data-bs-toggle="dropdown">
+                            <div class="user-avatar" id="userAvatar">D</div>
+                        </div>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><span class="dropdown-item-text"><strong id="userName">Doctor</strong></span></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="#" onclick="handleLogout()"><i class="bi bi-box-arrow-left me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <div class="alert alert-primary mb-4">
+                    <h5 class="mb-1"><i class="bi bi-stethoscope me-2"></i>Welcome, Dr. <span id="welcomeName">Doctor</span>!</h5>
+                    <p class="mb-0">Today is <span id="todayDate"></span>. Here's your overview.</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="stat-icon primary">
+                                <i class="bi bi-calendar-day"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="todayAppointments">0</h3>
+                                <p>Today's Appointments</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="stat-icon success">
+                                <i class="bi bi-check-circle"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="completedToday">0</h3>
+                                <p>Completed Today</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="stat-icon warning">
+                                <i class="bi bi-hourglass-split"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="pendingToday">0</h3>
+                                <p>Pending Today</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="stat-icon info">
+                                <i class="bi bi-people"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="totalPatients">0</h3>
+                                <p>Total Patients</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="quick-actions">
+                            <a href="appointments.html" class="quick-action-btn">
+                                <i class="bi bi-calendar-check"></i>
+                                <span>View Appointments</span>
+                            </a>
+                            <a href="create-encounter.html" class="quick-action-btn">
+                                <i class="bi bi-file-medical"></i>
+                                <span>Create Encounter</span>
+                            </a>
+                            <a href="prescribe.html" class="quick-action-btn">
+                                <i class="bi bi-capsule"></i>
+                                <span>Write Prescription</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Today's Appointments -->
+                <div class="data-card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-calendar-day me-2"></i>Today's Appointments</h5>
+                        <a href="appointments.html" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Patient</th>
+                                        <th>Reason</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="todayAppointmentsTable">
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4">
+                                            <div class="spinner-border text-primary"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../js/config.js"></script>
+    <script src="../../js/api.js"></script>
+    <script src="../../js/utils.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script>
+        if (!Auth.requireRole([CONFIG.ROLES.DOCTOR])) {
+            window.location.href = '../../index.html';
+        }
+
+        const doctorId = Auth.getUserId();
+        let patients = {};
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            const user = Auth.getUser();
+            document.getElementById('welcomeName').textContent = user.fullName || 'Doctor';
+            document.getElementById('userName').textContent = user.fullName || 'Doctor';
+            document.getElementById('userAvatar').textContent = (user.fullName || 'D').charAt(0).toUpperCase();
+            document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            });
+
+            await loadDashboardData();
+        });
+
+        async function loadDashboardData() {
+            try {
+                // Load today's appointments
+                const todayAppointments = await AppointmentAPI.getDoctorToday(doctorId);
+
+                const completed = todayAppointments.filter(a => a.appointmentStatus === 'COMPLETED').length;
+                const pending = todayAppointments.filter(a => a.appointmentStatus === 'BOOKED').length;
+
+                document.getElementById('todayAppointments').textContent = todayAppointments.length;
+                document.getElementById('completedToday').textContent = completed;
+                document.getElementById('pendingToday').textContent = pending;
+
+                // Load all appointments to count unique patients
+                const allAppointments = await AppointmentAPI.getByDoctor(doctorId);
+                const uniquePatients = [...new Set(allAppointments.map(a => a.patientId))];
+                document.getElementById('totalPatients').textContent = uniquePatients.length;
+
+                // Load patient details for display
+                await loadPatientDetails(todayAppointments);
+                displayTodayAppointments(todayAppointments);
+
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                document.getElementById('todayAppointmentsTable').innerHTML = `
+                    <tr><td colspan="5">${Utils.getErrorState('Failed to load data')}</td></tr>
+                `;
+            }
+        }
+
+        async function loadPatientDetails(appointments) {
+            const patientIds = [...new Set(appointments.map(a => a.patientId))];
+            for (const pid of patientIds) {
+                try {
+                    patients[pid] = await PatientAPI.getById(pid);
+                } catch (e) {
+                    patients[pid] = { fullName: 'Unknown Patient' };
+                }
+            }
+        }
+
+        function displayTodayAppointments(appointments) {
+            const tbody = document.getElementById('todayAppointmentsTable');
+
+            if (appointments.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5">${Utils.getEmptyState('No appointments for today', 'bi-calendar-x')}</td></tr>`;
+                return;
+            }
+
+            // Sort by time
+            appointments.sort((a, b) => a.appointmentTime.localeCompare(b.appointmentTime));
+
+            tbody.innerHTML = appointments.map(apt => {
+                const patient = patients[apt.patientId] || { fullName: 'Unknown' };
+                const canComplete = apt.appointmentStatus === 'BOOKED';
+
+                return `
+                    <tr>
+                        <td><strong>${Utils.formatTime(apt.appointmentTime)}</strong></td>
+                        <td>${patient.fullName}</td>
+                        <td>${apt.reasonForVisit || '-'}</td>
+                        <td>${Utils.getStatusBadge(apt.appointmentStatus)}</td>
+                        <td>
+                            ${canComplete ? `
+                                <button class="btn btn-sm btn-success me-1" onclick="completeAppointment(${apt.appointmentId})" title="Mark Complete">
+                                    <i class="bi bi-check-lg"></i>
+                                </button>
+                                <a href="create-encounter.html?patientId=${apt.patientId}&appointmentId=${apt.appointmentId}" class="btn btn-sm btn-primary me-1" title="Create Encounter">
+                                    <i class="bi bi-file-medical"></i>
+                                </a>
+                                <a href="prescribe.html?patientId=${apt.patientId}" class="btn btn-sm btn-warning" title="Prescribe">
+                                    <i class="bi bi-capsule"></i>
+                                </a>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function completeAppointment(appointmentId) {
+            try {
+                await AppointmentAPI.updateStatus(appointmentId, 'COMPLETED');
+                Utils.showToast('Appointment marked as completed', 'success');
+                await loadDashboardData();
+            } catch (error) {
+                Utils.showToast(error.message || 'Failed to update appointment', 'error');
+            }
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('show');
+            document.getElementById('sidebarOverlay').classList.toggle('show');
+        }
+
+        function handleLogout() {
+            Auth.logout();
+            window.location.href = '../../index.html';
+        }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Patient Care System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../../css/style.css" rel="stylesheet">
+    <link href="../../css/dashboard.css" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <i class="bi bi-hospital logo-icon"></i>
+                <h4>Patient Care System</h4>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-section">Administration</li>
+                <li><a href="dashboard.html" class="active"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                <li><a href="users.html"><i class="bi bi-people"></i> User Management</a></li>
+                <li><a href="create-user.html"><i class="bi bi-person-plus"></i> Create User</a></li>
+                <li class="menu-section">System Overview</li>
+                <li><a href="patients.html"><i class="bi bi-person-badge"></i> Patients</a></li>
+                <li><a href="appointments.html"><i class="bi bi-calendar-check"></i> Appointments</a></li>
+                <li><a href="prescriptions.html"><i class="bi bi-capsule"></i> Prescriptions</a></li>
+                <li><a href="invoices.html"><i class="bi bi-receipt"></i> Invoices</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <button class="logout-btn" onclick="handleLogout()">
+                    <i class="bi bi-box-arrow-left"></i> Logout
+                </button>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <header class="top-navbar">
+                <button class="sidebar-toggle" onclick="toggleSidebar()">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h1 class="page-title">Admin Dashboard</h1>
+                <div class="navbar-right">
+                    <span class="badge bg-danger" id="userName">Administrator</span>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <div class="alert alert-danger mb-4">
+                    <h5 class="mb-1"><i class="bi bi-shield-lock me-2"></i>Administrator Panel</h5>
+                    <p class="mb-0">Full system access. Manage users, view all data across all modules.</p>
+                </div>
+
+                <!-- System Stats -->
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6 col-lg-2">
+                        <div class="stat-card">
+                            <div class="stat-icon primary">
+                                <i class="bi bi-people"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="totalUsers">0</h3>
+                                <p>Total Users</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-2">
+                        <div class="stat-card">
+                            <div class="stat-icon success">
+                                <i class="bi bi-person-badge"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="totalPatients">0</h3>
+                                <p>Patients</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-2">
+                        <div class="stat-card">
+                            <div class="stat-icon info">
+                                <i class="bi bi-calendar-check"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="todayAppointments">0</h3>
+                                <p>Today's Appts</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-2">
+                        <div class="stat-card">
+                            <div class="stat-icon warning">
+                                <i class="bi bi-prescription2"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="pendingRx">0</h3>
+                                <p>Pending Rx</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-2">
+                        <div class="stat-card">
+                            <div class="stat-icon danger">
+                                <i class="bi bi-receipt"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="unpaidInvoices">0</h3>
+                                <p>Unpaid Bills</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-2">
+                        <div class="stat-card">
+                            <div class="stat-icon secondary">
+                                <i class="bi bi-shield-check"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="pendingClaims">0</h3>
+                                <p>Pending Claims</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Breakdown -->
+                <div class="row mb-4">
+                    <div class="col-lg-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="bi bi-people me-2"></i>Users by Role</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="usersByRole">
+                                    <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Actions</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="quick-actions">
+                                    <a href="create-user.html" class="quick-action-btn">
+                                        <i class="bi bi-person-plus"></i>
+                                        <span>Create User</span>
+                                    </a>
+                                    <a href="users.html" class="quick-action-btn">
+                                        <i class="bi bi-people"></i>
+                                        <span>Manage Users</span>
+                                    </a>
+                                    <a href="patients.html" class="quick-action-btn">
+                                        <i class="bi bi-person-badge"></i>
+                                        <span>View Patients</span>
+                                    </a>
+                                    <a href="appointments.html" class="quick-action-btn">
+                                        <i class="bi bi-calendar"></i>
+                                        <span>Appointments</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="data-card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-clock-history me-2"></i>Recent Users</h5>
+                        <a href="users.html" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentUsersTable">
+                                    <tr><td colspan="4" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../js/config.js"></script>
+    <script src="../../js/api.js"></script>
+    <script src="../../js/utils.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script>
+        if (!Auth.requireRole([CONFIG.ROLES.ADMIN])) {
+            window.location.href = '../../index.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            const user = Auth.getUser();
+            document.getElementById('userName').textContent = user.fullName || 'Administrator';
+            await loadDashboardData();
+        });
+
+        async function loadDashboardData() {
+            try {
+                // Load users
+                const users = await AuthAPI.getAllUsers();
+                document.getElementById('totalUsers').textContent = users.length;
+                displayUsersByRole(users);
+                displayRecentUsers(users.slice(0, 10));
+
+                // Load patients
+                try {
+                    const patients = await PatientAPI.getAll();
+                    document.getElementById('totalPatients').textContent = patients.length;
+                } catch (e) { document.getElementById('totalPatients').textContent = '0'; }
+
+                // Load today's appointments
+                try {
+                    const appointments = await AppointmentAPI.getByDate(Utils.getToday());
+                    document.getElementById('todayAppointments').textContent = appointments.length;
+                } catch (e) { document.getElementById('todayAppointments').textContent = '0'; }
+
+                // Load pending prescriptions
+                try {
+                    const pending = await PharmacyAPI.getPendingPrescriptions();
+                    document.getElementById('pendingRx').textContent = pending.length;
+                } catch (e) { document.getElementById('pendingRx').textContent = '0'; }
+
+                // Load unpaid invoices
+                try {
+                    const unpaid = await BillingAPI.getUnpaidInvoices();
+                    document.getElementById('unpaidInvoices').textContent = unpaid.length;
+                } catch (e) { document.getElementById('unpaidInvoices').textContent = '0'; }
+
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+
+        function displayUsersByRole(users) {
+            const roles = {};
+            users.forEach(u => {
+                roles[u.role] = (roles[u.role] || 0) + 1;
+            });
+
+            let html = '<div class="row">';
+            Object.entries(roles).sort((a, b) => b[1] - a[1]).forEach(([role, count]) => {
+                html += `
+                    <div class="col-6 mb-3">
+                        <div class="d-flex justify-content-between align-items-center p-2 bg-light rounded">
+                            <span>${Utils.getRoleBadge(role)}</span>
+                            <strong>${count}</strong>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            document.getElementById('usersByRole').innerHTML = html;
+        }
+
+        function displayRecentUsers(users) {
+            const tbody = document.getElementById('recentUsersTable');
+
+            if (users.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4">${Utils.getEmptyState('No users', 'bi-people')}</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = users.map(u => `
+                <tr>
+                    <td><strong>${u.fullName}</strong></td>
+                    <td>${u.email}</td>
+                    <td>${Utils.getRoleBadge(u.role)}</td>
+                    <td>${u.active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('show');
+            document.getElementById('sidebarOverlay').classList.toggle('show');
+        }
+
+        function handleLogout() {
+            Auth.logout();
+            window.location.href = '../../index.html';
+        }
+    </script>
+</body>
+</html>
+

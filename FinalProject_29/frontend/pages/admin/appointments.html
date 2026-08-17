@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Appointments - Admin Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../../css/style.css" rel="stylesheet">
+    <link href="../../css/dashboard.css" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header"><i class="bi bi-hospital logo-icon"></i><h4>Patient Care System</h4></div>
+            <ul class="sidebar-menu">
+                <li class="menu-section">Administration</li>
+                <li><a href="dashboard.html"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                <li><a href="users.html"><i class="bi bi-people"></i> User Management</a></li>
+                <li><a href="create-user.html"><i class="bi bi-person-plus"></i> Create User</a></li>
+                <li class="menu-section">System Overview</li>
+                <li><a href="patients.html"><i class="bi bi-person-badge"></i> Patients</a></li>
+                <li><a href="appointments.html" class="active"><i class="bi bi-calendar-check"></i> Appointments</a></li>
+                <li><a href="prescriptions.html"><i class="bi bi-capsule"></i> Prescriptions</a></li>
+                <li><a href="invoices.html"><i class="bi bi-receipt"></i> Invoices</a></li>
+            </ul>
+            <div class="sidebar-footer"><button class="logout-btn" onclick="handleLogout()"><i class="bi bi-box-arrow-left"></i> Logout</button></div>
+        </nav>
+        <main class="main-content">
+            <header class="top-navbar">
+                <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+                <h1 class="page-title">All Appointments</h1>
+                <div class="navbar-right"></div>
+            </header>
+            <div class="page-content">
+                <div class="filters-section">
+                    <div class="row g-3">
+                        <div class="col-md-3"><input type="date" class="form-control" id="filterDate"></div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="filterStatus">
+                                <option value="">All Status</option>
+                                <option value="BOOKED">Booked</option>
+                                <option value="COMPLETED">Completed</option>
+                                <option value="CANCELLED">Cancelled</option>
+                                <option value="NO_SHOW">No Show</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3"><button class="btn btn-primary" onclick="applyFilters()">Filter</button><button class="btn btn-outline-secondary ms-2" onclick="clearFilters()">Clear</button></div>
+                    </div>
+                </div>
+                <div class="data-card">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead><tr><th>Date</th><th>Time</th><th>Patient</th><th>Doctor</th><th>Reason</th><th>Status</th></tr></thead>
+                                <tbody id="dataTable"><tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../js/config.js"></script>
+    <script src="../../js/api.js"></script>
+    <script src="../../js/utils.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script>
+        if (!Auth.requireRole([CONFIG.ROLES.ADMIN])) window.location.href = '../../index.html';
+        let allData = [], patients = {}, doctors = {};
+        document.addEventListener('DOMContentLoaded', async () => { document.getElementById('filterDate').value = Utils.getToday(); await loadData(); });
+        async function loadData() {
+            try {
+                allData = await AppointmentAPI.getAll();
+                const doctorList = await AuthAPI.getUsersByRole('DOCTOR');
+                doctorList.forEach(d => doctors[d.id] = d);
+                const patientIds = [...new Set(allData.map(a => a.patientId))];
+                for(const pid of patientIds) { try { patients[pid] = await PatientAPI.getById(pid); } catch(e) { patients[pid] = {fullName:'Unknown'}; } }
+                applyFilters();
+            } catch(e) { document.getElementById('dataTable').innerHTML = `<tr><td colspan="6">${Utils.getErrorState('Failed')}</td></tr>`; }
+        }
+        function applyFilters() {
+            const date = document.getElementById('filterDate').value;
+            const status = document.getElementById('filterStatus').value;
+            let filtered = [...allData];
+            if(date) filtered = filtered.filter(a => a.appointmentDate === date);
+            if(status) filtered = filtered.filter(a => a.appointmentStatus === status);
+            filtered.sort((a,b) => b.appointmentDate.localeCompare(a.appointmentDate) || a.appointmentTime.localeCompare(b.appointmentTime));
+            displayData(filtered);
+        }
+        function clearFilters() { document.getElementById('filterDate').value = ''; document.getElementById('filterStatus').value = ''; displayData(allData); }
+        function displayData(items) {
+            const tbody = document.getElementById('dataTable');
+            if(!items.length) { tbody.innerHTML = `<tr><td colspan="6">${Utils.getEmptyState('No appointments')}</td></tr>`; return; }
+            tbody.innerHTML = items.map(a => {
+                const p = patients[a.patientId] || {fullName:'Unknown'};
+                const d = doctors[a.doctorId] || {fullName:'Unknown'};
+                return `<tr>
+                    <td><strong>${Utils.formatDateDisplay(a.appointmentDate)}</strong></td>
+                    <td>${Utils.formatTime(a.appointmentTime)}</td>
+                    <td>${p.fullName}</td>
+                    <td>Dr. ${d.fullName}</td>
+                    <td>${a.reasonForVisit||'-'}</td>
+                    <td>${Utils.getStatusBadge(a.appointmentStatus)}</td>
+                </tr>`;
+            }).join('');
+        }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('show'); document.getElementById('sidebarOverlay').classList.toggle('show'); }
+        function handleLogout() { Auth.logout(); window.location.href = '../../index.html'; }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacist Dashboard - Patient Care System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../../css/style.css" rel="stylesheet">
+    <link href="../../css/dashboard.css" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <i class="bi bi-hospital logo-icon"></i>
+                <h4>Patient Care System</h4>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-section">Main Menu</li>
+                <li><a href="dashboard.html" class="active"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                <li><a href="prescriptions.html"><i class="bi bi-prescription2"></i> Prescriptions</a></li>
+                <li><a href="inventory.html"><i class="bi bi-box-seam"></i> Inventory</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <button class="logout-btn" onclick="handleLogout()">
+                    <i class="bi bi-box-arrow-left"></i> Logout
+                </button>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <header class="top-navbar">
+                <button class="sidebar-toggle" onclick="toggleSidebar()">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h1 class="page-title">Dashboard</h1>
+                <div class="navbar-right">
+                    <span class="badge bg-primary" id="userName">Pharmacist</span>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <div class="alert alert-primary mb-4">
+                    <h5 class="mb-1"><i class="bi bi-capsule-pill me-2"></i>Welcome, <span id="welcomeName">Pharmacist</span>!</h5>
+                    <p class="mb-0">Manage prescriptions and medication inventory.</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="stat-icon warning">
+                                <i class="bi bi-hourglass-split"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="pendingRx">0</h3>
+                                <p>Pending Prescriptions</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="stat-icon success">
+                                <i class="bi bi-check-circle"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="dispensedToday">0</h3>
+                                <p>Dispensed Today</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="stat-icon danger">
+                                <i class="bi bi-exclamation-triangle"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="lowStock">0</h3>
+                                <p>Low Stock Items</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="stat-icon info">
+                                <i class="bi bi-box-seam"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="totalMeds">0</h3>
+                                <p>Total Medications</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="quick-actions">
+                            <a href="prescriptions.html" class="quick-action-btn">
+                                <i class="bi bi-prescription2"></i>
+                                <span>View Prescriptions</span>
+                            </a>
+                            <a href="prescriptions.html?filter=pending" class="quick-action-btn">
+                                <i class="bi bi-hourglass-split"></i>
+                                <span>Pending to Dispense</span>
+                            </a>
+                            <a href="inventory.html" class="quick-action-btn">
+                                <i class="bi bi-box-seam"></i>
+                                <span>Manage Inventory</span>
+                            </a>
+                            <a href="inventory.html?filter=lowstock" class="quick-action-btn">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                <span>Low Stock Items</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pending Prescriptions -->
+                <div class="data-card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-prescription2 me-2"></i>Pending Prescriptions</h5>
+                        <a href="prescriptions.html" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Patient</th>
+                                        <th>Medication</th>
+                                        <th>Dosage</th>
+                                        <th>Quantity</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pendingTable">
+                                    <tr><td colspan="5" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../js/config.js"></script>
+    <script src="../../js/api.js"></script>
+    <script src="../../js/utils.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script>
+        if (!Auth.requireRole([CONFIG.ROLES.PHARMACIST])) {
+            window.location.href = '../../index.html';
+        }
+
+        let patients = {};
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            const user = Auth.getUser();
+            document.getElementById('welcomeName').textContent = user.fullName || 'Pharmacist';
+            document.getElementById('userName').textContent = user.fullName || 'Pharmacist';
+            await loadDashboardData();
+        });
+
+        async function loadDashboardData() {
+            try {
+                // Load pending prescriptions
+                const pending = await PharmacyAPI.getPendingPrescriptions();
+                document.getElementById('pendingRx').textContent = pending.length;
+
+                // Load all prescriptions to count today's dispensed
+                const all = await PharmacyAPI.getAllPrescriptions();
+                const today = Utils.getToday();
+                const dispensedToday = all.filter(p => p.dispenseStatus === 'DISPENSED' &&
+                    p.dispensedAt && p.dispensedAt.startsWith(today)).length;
+                document.getElementById('dispensedToday').textContent = dispensedToday;
+
+                // Load medications
+                const meds = await PharmacyAPI.getAllMedications();
+                document.getElementById('totalMeds').textContent = meds.length;
+
+                // Load low stock
+                try {
+                    const lowStock = await PharmacyAPI.getLowStockMedications();
+                    document.getElementById('lowStock').textContent = lowStock.length;
+                } catch (e) {
+                    document.getElementById('lowStock').textContent = '0';
+                }
+
+                // Load patient details
+                await loadPatientDetails(pending);
+                displayPendingPrescriptions(pending.slice(0, 10));
+
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+
+        async function loadPatientDetails(prescriptions) {
+            const patientIds = [...new Set(prescriptions.map(p => p.patientId))];
+            for (const pid of patientIds) {
+                if (!patients[pid]) {
+                    try {
+                        patients[pid] = await PatientAPI.getById(pid);
+                    } catch (e) {
+                        patients[pid] = { fullName: 'Unknown' };
+                    }
+                }
+            }
+        }
+
+        function displayPendingPrescriptions(prescriptions) {
+            const tbody = document.getElementById('pendingTable');
+
+            if (prescriptions.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5">${Utils.getEmptyState('No pending prescriptions', 'bi-check-circle')}</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = prescriptions.map(rx => {
+                const patient = patients[rx.patientId] || { fullName: 'Unknown' };
+                return `<tr>
+                    <td>${patient.fullName}</td>
+                    <td><strong>${rx.medicationName}</strong></td>
+                    <td>${rx.dosage}</td>
+                    <td>${rx.quantity || '-'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-success" onclick="dispense(${rx.prescriptionId})">
+                            <i class="bi bi-check-lg me-1"></i>Dispense
+                        </button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        async function dispense(prescriptionId) {
+            try {
+                await PharmacyAPI.dispenseMedication(prescriptionId, Auth.getUserId());
+                Utils.showToast('Medication dispensed!', 'success');
+                await loadDashboardData();
+            } catch (error) {
+                Utils.showToast(error.message || 'Failed to dispense', 'error');
+            }
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('show');
+            document.getElementById('sidebarOverlay').classList.toggle('show');
+        }
+
+        function handleLogout() {
+            Auth.logout();
+            window.location.href = '../../index.html';
+        }
+    </script>
+</body>
+</html>
+

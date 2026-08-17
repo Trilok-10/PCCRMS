@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Encounter - Doctor Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../../css/style.css" rel="stylesheet">
+    <link href="../../css/dashboard.css" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <i class="bi bi-hospital logo-icon"></i>
+                <h4>Patient Care System</h4>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-section">Main Menu</li>
+                <li><a href="dashboard.html"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                <li><a href="appointments.html"><i class="bi bi-calendar-check"></i> Appointments</a></li>
+                <li class="menu-section">Clinical</li>
+                <li><a href="create-encounter.html" class="active"><i class="bi bi-file-medical"></i> Create Encounter</a></li>
+                <li><a href="prescribe.html"><i class="bi bi-capsule"></i> Prescribe</a></li>
+                <li class="menu-section">Settings</li>
+                <li><a href="schedule.html"><i class="bi bi-clock"></i> My Schedule</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <button class="logout-btn" onclick="handleLogout()">
+                    <i class="bi bi-box-arrow-left"></i> Logout
+                </button>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <header class="top-navbar">
+                <button class="sidebar-toggle" onclick="toggleSidebar()">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h1 class="page-title">Create Clinical Encounter</h1>
+                <div class="navbar-right"></div>
+            </header>
+
+            <div class="page-content">
+                <div class="row">
+                    <!-- Patient Selection -->
+                    <div class="col-lg-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="bi bi-person me-2"></i>Select Patient</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- MRN Lookup -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Enter MRN</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="mrnInput" placeholder="Enter patient MRN...">
+                                        <button class="btn btn-primary" type="button" onclick="lookupByMRN()">
+                                            <i class="bi bi-search"></i> Find
+                                        </button>
+                                    </div>
+                                    <div id="mrnError" class="text-danger small mt-1 d-none"></div>
+                                </div>
+
+                                <div id="selectedPatientInfo" class="d-none mt-3">
+                                    <hr>
+                                    <h6>Selected Patient</h6>
+                                    <div id="patientDetails"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Encounter Form -->
+                    <div class="col-lg-8 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="bi bi-file-medical me-2"></i>Encounter Details</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="encounterForm">
+                                    <div id="alertContainer"></div>
+                                    <input type="hidden" id="patientId">
+                                    <input type="hidden" id="appointmentId">
+
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Encounter Date <span class="text-danger">*</span></label>
+                                            <input type="date" class="form-control" id="encounterDate" required readonly style="background-color: #e9ecef; cursor: not-allowed;">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Diagnosis Code (ICD-10) <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="diagnosisCode" placeholder="e.g., J06.9" required>
+                                        </div>
+
+                                        <div class="col-12">
+                                            <label class="form-label">Vitals Summary</label>
+                                            <div class="row g-2">
+                                                <div class="col-md-3">
+                                                    <div class="input-group input-group-sm">
+                                                        <span class="input-group-text">BP</span>
+                                                        <input type="text" class="form-control" id="bp" placeholder="120/80">
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="input-group input-group-sm">
+                                                        <span class="input-group-text">HR</span>
+                                                        <input type="text" class="form-control" id="hr" placeholder="72">
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="input-group input-group-sm">
+                                                        <span class="input-group-text">Temp</span>
+                                                        <input type="text" class="form-control" id="temp" placeholder="98.6°F">
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="input-group input-group-sm">
+                                                        <span class="input-group-text">SpO2</span>
+                                                        <input type="text" class="form-control" id="spo2" placeholder="98%">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-12">
+                                            <label class="form-label">Chief Complaint</label>
+                                            <input type="text" class="form-control" id="chiefComplaint" placeholder="Primary reason for visit">
+                                        </div>
+
+                                        <div class="col-12">
+                                            <label class="form-label">Clinical Notes <span class="text-danger">*</span></label>
+                                            <textarea class="form-control" id="clinicalNotes" rows="5" placeholder="Document clinical findings, examination results, assessment, and plan..." required></textarea>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-4 d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary" id="saveBtn" disabled>
+                                            <i class="bi bi-check-lg me-2"></i>Save Encounter
+                                        </button>
+                                        <a href="prescribe.html" id="prescribeAfterBtn" class="btn btn-warning d-none">
+                                            <i class="bi bi-capsule me-2"></i>Write Prescription
+                                        </a>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../js/config.js"></script>
+    <script src="../../js/api.js"></script>
+    <script src="../../js/utils.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script>
+        if (!Auth.requireRole([CONFIG.ROLES.DOCTOR])) {
+            window.location.href = '../../index.html';
+        }
+
+        const doctorId = Auth.getUserId();
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            document.getElementById('encounterDate').value = Utils.getToday();
+
+            // Check URL params
+            const params = Utils.getUrlParams();
+            if (params.patientId) {
+                await loadPatientById(params.patientId);
+            }
+            if (params.appointmentId) {
+                document.getElementById('appointmentId').value = params.appointmentId;
+            }
+
+            document.getElementById('mrnInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    lookupByMRN();
+                }
+            });
+
+            document.getElementById('encounterForm').addEventListener('submit', handleSubmit);
+        });
+
+        async function lookupByMRN() {
+            const mrn = document.getElementById('mrnInput').value.trim();
+            const errorDiv = document.getElementById('mrnError');
+            errorDiv.classList.add('d-none');
+
+            if (!mrn) {
+                errorDiv.textContent = 'Please enter an MRN';
+                errorDiv.classList.remove('d-none');
+                return;
+            }
+
+            try {
+                const patient = await PatientAPI.getByMrn(mrn);
+                if (patient) {
+                    displaySelectedPatient(patient);
+                    errorDiv.classList.add('d-none');
+                } else {
+                    errorDiv.textContent = 'No patient found with this MRN';
+                    errorDiv.classList.remove('d-none');
+                }
+            } catch (error) {
+                errorDiv.textContent = 'No patient found with this MRN';
+                errorDiv.classList.remove('d-none');
+            }
+        }
+
+        async function loadPatientById(patientId) {
+            try {
+                const patient = await PatientAPI.getById(patientId);
+                displaySelectedPatient(patient);
+            } catch (error) {
+                Utils.showToast('Failed to load patient', 'error');
+            }
+        }
+
+
+        function displaySelectedPatient(patient) {
+            document.getElementById('patientId').value = patient.patientId;
+            document.getElementById('saveBtn').disabled = false;
+            document.getElementById('selectedPatientInfo').classList.remove('d-none');
+            document.getElementById('mrnInput').value = patient.mrn || '';
+
+            document.getElementById('patientDetails').innerHTML = `
+                <div class="bg-light p-3 rounded">
+                    <strong>${patient.fullName}</strong><br>
+                    <small>MRN: <code>${patient.mrn || 'N/A'}</code></small><br>
+                    <small>DOB: ${Utils.formatDateDisplay(patient.dateOfBirth)} (${Utils.calculateAge(patient.dateOfBirth)} yrs)</small><br>
+                    <small>Gender: ${patient.gender || '-'}</small><br>
+                    ${patient.allergies ? `<small class="text-danger"><strong>Allergies:</strong> ${patient.allergies}</small>` : ''}
+                </div>
+            `;
+
+            document.getElementById('prescribeAfterBtn').href = `prescribe.html?patientId=${patient.patientId}`;
+        }
+
+        async function handleSubmit(e) {
+            e.preventDefault();
+
+            const patientId = document.getElementById('patientId').value;
+            if (!patientId) {
+                Utils.showToast('Please select a patient first', 'warning');
+                return;
+            }
+
+            const btn = document.getElementById('saveBtn');
+            const alertContainer = document.getElementById('alertContainer');
+            alertContainer.innerHTML = '';
+
+            // Build vitals summary
+            const bp = document.getElementById('bp').value.trim();
+            const hr = document.getElementById('hr').value.trim();
+            const temp = document.getElementById('temp').value.trim();
+            const spo2 = document.getElementById('spo2').value.trim();
+            let vitalsSummary = [];
+            if (bp) vitalsSummary.push(`BP: ${bp}`);
+            if (hr) vitalsSummary.push(`HR: ${hr}`);
+            if (temp) vitalsSummary.push(`Temp: ${temp}`);
+            if (spo2) vitalsSummary.push(`SpO2: ${spo2}`);
+
+            const encounterData = {
+                patientId: parseInt(patientId),
+                doctorId: doctorId,
+                encounterDate: document.getElementById('encounterDate').value,
+                diagnosisCode: document.getElementById('diagnosisCode').value.trim(),
+                clinicalNotes: document.getElementById('clinicalNotes').value.trim(),
+                vitalsSummary: vitalsSummary.join(', ') || null,
+                chiefComplaint: document.getElementById('chiefComplaint').value.trim()
+            };
+
+            Utils.setButtonLoading(btn, true);
+
+            try {
+                await EhrAPI.createEncounter(encounterData);
+
+                // Update appointment status if linked
+                const appointmentId = document.getElementById('appointmentId').value;
+                if (appointmentId) {
+                    try {
+                        await AppointmentAPI.updateStatus(appointmentId, 'COMPLETED');
+                    } catch (e) {
+                        console.log('Could not update appointment status');
+                    }
+                }
+
+                alertContainer.innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle me-2"></i>
+                        Clinical encounter saved successfully!
+                    </div>
+                `;
+
+                document.getElementById('prescribeAfterBtn').classList.remove('d-none');
+
+                // Reset form except patient
+                document.getElementById('diagnosisCode').value = '';
+                document.getElementById('clinicalNotes').value = '';
+                document.getElementById('chiefComplaint').value = '';
+                document.getElementById('bp').value = '';
+                document.getElementById('hr').value = '';
+                document.getElementById('temp').value = '';
+                document.getElementById('spo2').value = '';
+
+            } catch (error) {
+                alertContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        ${error.message || 'Failed to save encounter'}
+                    </div>
+                `;
+            } finally {
+                Utils.setButtonLoading(btn, false);
+            }
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('show');
+            document.getElementById('sidebarOverlay').classList.toggle('show');
+        }
+
+        function handleLogout() {
+            Auth.logout();
+            window.location.href = '../../index.html';
+        }
+    </script>
+</body>
+</html>
+

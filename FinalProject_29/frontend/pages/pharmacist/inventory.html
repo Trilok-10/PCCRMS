@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory - Pharmacist Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../../css/style.css" rel="stylesheet">
+    <link href="../../css/dashboard.css" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <i class="bi bi-hospital logo-icon"></i>
+                <h4>Patient Care System</h4>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-section">Main Menu</li>
+                <li><a href="dashboard.html"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                <li><a href="prescriptions.html"><i class="bi bi-prescription2"></i> Prescriptions</a></li>
+                <li><a href="inventory.html" class="active"><i class="bi bi-box-seam"></i> Inventory</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <button class="logout-btn" onclick="handleLogout()">
+                    <i class="bi bi-box-arrow-left"></i> Logout
+                </button>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <header class="top-navbar">
+                <button class="sidebar-toggle" onclick="toggleSidebar()">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h1 class="page-title">Medication Inventory</h1>
+                <div class="navbar-right">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addMedModal">
+                        <i class="bi bi-plus-lg me-2"></i>Add Medication
+                    </button>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <!-- Alerts -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="alert alert-warning mb-0" id="lowStockAlert" style="display:none;">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <span id="lowStockCount">0</span> medications are low on stock
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="alert alert-danger mb-0" id="expiringAlert" style="display:none;">
+                            <i class="bi bi-calendar-x me-2"></i>
+                            <span id="expiringCount">0</span> medications expiring soon
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search & Filter -->
+                <div class="filters-section">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" id="searchInput" placeholder="Search medications...">
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="filterCategory">
+                                <option value="">All Categories</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-primary" onclick="searchMedications()">Search</button>
+                            <button class="btn btn-outline-secondary" onclick="loadAllMedications()">Reset</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inventory Table -->
+                <div class="data-card">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Generic Name</th>
+                                        <th>Category</th>
+                                        <th>Strength</th>
+                                        <th>Stock</th>
+                                        <th>Unit Price</th>
+                                        <th>Expiry</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="medsTable">
+                                    <tr><td colspan="8" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <!-- Add Medication Modal -->
+    <div class="modal fade" id="addMedModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="medModalTitle"><i class="bi bi-capsule me-2"></i>Add Medication</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="medForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="medId">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Medication Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="medName" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Generic Name</label>
+                                <input type="text" class="form-control" id="genericName">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Category</label>
+                                <input type="text" class="form-control" id="category" placeholder="e.g., Antibiotic">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Dosage Form</label>
+                                <select class="form-select" id="dosageForm">
+                                    <option value="">Select...</option>
+                                    <option value="Tablet">Tablet</option>
+                                    <option value="Capsule">Capsule</option>
+                                    <option value="Syrup">Syrup</option>
+                                    <option value="Injection">Injection</option>
+                                    <option value="Cream">Cream</option>
+                                    <option value="Drops">Drops</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Strength</label>
+                                <input type="text" class="form-control" id="strength" placeholder="e.g., 500mg">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Stock Quantity <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="stockQty" required min="0">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Unit Price</label>
+                                <input type="number" class="form-control" id="unitPrice" step="0.01" min="0">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Manufacturer</label>
+                                <input type="text" class="form-control" id="manufacturer">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Expiry Date</label>
+                                <input type="date" class="form-control" id="expiryDate">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="saveMedBtn">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Stock Modal -->
+    <div class="modal fade" id="stockModal" tabindex="-1">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Update Stock</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="stockForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="stockMedId">
+                        <p>Medication: <strong id="stockMedName"></strong></p>
+                        <p>Current Stock: <span id="currentStock"></span></p>
+                        <div class="mb-3">
+                            <label class="form-label">New Quantity</label>
+                            <input type="number" class="form-control" id="newQty" min="0" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../js/config.js"></script>
+    <script src="../../js/api.js"></script>
+    <script src="../../js/utils.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script>
+        if (!Auth.requireRole([CONFIG.ROLES.PHARMACIST])) {
+            window.location.href = '../../index.html';
+        }
+
+        let medications = [];
+        let categories = new Set();
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadAllMedications();
+            await checkAlerts();
+
+            document.getElementById('searchInput').addEventListener('keypress', e => {
+                if (e.key === 'Enter') searchMedications();
+            });
+
+            document.getElementById('medForm').addEventListener('submit', handleSaveMed);
+            document.getElementById('stockForm').addEventListener('submit', handleUpdateStock);
+
+            // Check URL params
+            const params = Utils.getUrlParams();
+            if (params.filter === 'lowstock') {
+                loadLowStock();
+            }
+        });
+
+        async function loadAllMedications() {
+            try {
+                medications = await PharmacyAPI.getAllMedications();
+
+                // Extract categories
+                categories.clear();
+                medications.forEach(m => {
+                    if (m.category) categories.add(m.category);
+                });
+
+                populateCategories();
+                displayMedications(medications);
+            } catch (error) {
+                document.getElementById('medsTable').innerHTML = `<tr><td colspan="8">${Utils.getErrorState('Failed to load')}</td></tr>`;
+            }
+        }
+
+        function populateCategories() {
+            const select = document.getElementById('filterCategory');
+            select.innerHTML = '<option value="">All Categories</option>';
+            [...categories].sort().forEach(cat => {
+                select.innerHTML += `<option value="${cat}">${cat}</option>`;
+            });
+        }
+
+        async function searchMedications() {
+            const query = document.getElementById('searchInput').value.trim();
+            const category = document.getElementById('filterCategory').value;
+
+            let filtered = [...medications];
+
+            if (query) {
+                const q = query.toLowerCase();
+                filtered = filtered.filter(m =>
+                    m.name.toLowerCase().includes(q) ||
+                    (m.genericName && m.genericName.toLowerCase().includes(q))
+                );
+            }
+
+            if (category) {
+                filtered = filtered.filter(m => m.category === category);
+            }
+
+            displayMedications(filtered);
+        }
+
+        async function loadLowStock() {
+            try {
+                const lowStock = await PharmacyAPI.getLowStockMedications();
+                displayMedications(lowStock);
+            } catch (e) {
+                displayMedications([]);
+            }
+        }
+
+        async function checkAlerts() {
+            try {
+                const lowStock = await PharmacyAPI.getLowStockMedications();
+                if (lowStock.length > 0) {
+                    document.getElementById('lowStockAlert').style.display = 'block';
+                    document.getElementById('lowStockCount').textContent = lowStock.length;
+                }
+            } catch (e) {}
+
+            try {
+                const expiring = await PharmacyAPI.getExpiringMedications();
+                if (expiring.length > 0) {
+                    document.getElementById('expiringAlert').style.display = 'block';
+                    document.getElementById('expiringCount').textContent = expiring.length;
+                }
+            } catch (e) {}
+        }
+
+        function displayMedications(meds) {
+            const tbody = document.getElementById('medsTable');
+
+            if (meds.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8">${Utils.getEmptyState('No medications found', 'bi-capsule')}</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = meds.map(m => {
+                const isLowStock = m.stockQuantity <= (m.reorderLevel || 10);
+                const stockClass = isLowStock ? 'text-danger fw-bold' : '';
+
+                return `<tr>
+                    <td><strong>${m.name}</strong></td>
+                    <td>${m.genericName || '-'}</td>
+                    <td>${m.category || '-'}</td>
+                    <td>${m.strength || '-'}</td>
+                    <td class="${stockClass}">${m.stockQuantity} ${isLowStock ? '<i class="bi bi-exclamation-triangle"></i>' : ''}</td>
+                    <td>${m.unitPrice ? Utils.formatCurrency(m.unitPrice) : '-'}</td>
+                    <td>${m.expiryDate ? Utils.formatDateDisplay(m.expiryDate) : '-'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="openUpdateStock(${m.medicationId}, '${m.name}', ${m.stockQuantity})" title="Update Stock"><i class="bi bi-box-seam"></i></button>
+                        <button class="btn btn-sm btn-outline-secondary me-1" onclick="viewMed(${m.medicationId})" title="View Details"><i class="bi bi-eye"></i></button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteMedication(${m.medicationId}, '${m.name}')" title="Delete Medication"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function openUpdateStock(id, name, current) {
+            document.getElementById('stockMedId').value = id;
+            document.getElementById('stockMedName').textContent = name;
+            document.getElementById('currentStock').textContent = current;
+            document.getElementById('newQty').value = current;
+            new bootstrap.Modal(document.getElementById('stockModal')).show();
+        }
+
+        async function handleUpdateStock(e) {
+            e.preventDefault();
+            const id = document.getElementById('stockMedId').value;
+            const qty = document.getElementById('newQty').value;
+
+            try {
+                await PharmacyAPI.updateStock(id, qty);
+                Utils.showToast('Stock updated!', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('stockModal')).hide();
+                await loadAllMedications();
+            } catch (error) {
+                Utils.showToast(error.message || 'Failed', 'error');
+            }
+        }
+
+        async function handleSaveMed(e) {
+            e.preventDefault();
+            const btn = document.getElementById('saveMedBtn');
+            Utils.setButtonLoading(btn, true);
+
+            const data = {
+                name: document.getElementById('medName').value.trim(),
+                genericName: document.getElementById('genericName').value.trim() || null,
+                category: document.getElementById('category').value.trim() || null,
+                dosageForm: document.getElementById('dosageForm').value || null,
+                strength: document.getElementById('strength').value.trim() || null,
+                stockQuantity: parseInt(document.getElementById('stockQty').value),
+                unitPrice: parseFloat(document.getElementById('unitPrice').value) || null,
+                manufacturer: document.getElementById('manufacturer').value.trim() || null,
+                expiryDate: document.getElementById('expiryDate').value || null
+            };
+
+            try {
+                await PharmacyAPI.addMedication(data);
+                Utils.showToast('Medication added!', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('addMedModal')).hide();
+                document.getElementById('medForm').reset();
+                await loadAllMedications();
+            } catch (error) {
+                Utils.showToast(error.message || 'Failed', 'error');
+            } finally {
+                Utils.setButtonLoading(btn, false);
+            }
+        }
+
+        function viewMed(id) {
+            const med = medications.find(m => m.medicationId === id);
+            if (!med) return;
+
+            // Pre-fill form for viewing
+            document.getElementById('medId').value = med.medicationId;
+            document.getElementById('medName').value = med.name;
+            document.getElementById('genericName').value = med.genericName || '';
+            document.getElementById('category').value = med.category || '';
+            document.getElementById('dosageForm').value = med.dosageForm || '';
+            document.getElementById('strength').value = med.strength || '';
+            document.getElementById('stockQty').value = med.stockQuantity;
+            document.getElementById('unitPrice').value = med.unitPrice || '';
+            document.getElementById('manufacturer').value = med.manufacturer || '';
+            document.getElementById('expiryDate').value = med.expiryDate || '';
+
+            document.getElementById('medModalTitle').textContent = 'View/Edit Medication';
+            new bootstrap.Modal(document.getElementById('addMedModal')).show();
+        }
+
+        async function deleteMedication(id, name) {
+            const confirmed = await Utils.confirm('Delete Medication', `Are you sure you want to delete "${name}"?`);
+            if (!confirmed) return;
+
+            try {
+                await PharmacyAPI.deleteMedication(id);
+                Utils.showToast('Medication deleted successfully', 'success');
+                await loadAllMedications();
+            } catch (error) {
+                Utils.showToast(error.message || 'Failed to delete medication', 'error');
+            }
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('show');
+            document.getElementById('sidebarOverlay').classList.toggle('show');
+        }
+
+        function handleLogout() {
+            Auth.logout();
+            window.location.href = '../../index.html';
+        }
+    </script>
+</body>
+</html>
+

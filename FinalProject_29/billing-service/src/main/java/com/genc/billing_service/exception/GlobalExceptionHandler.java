@@ -1,0 +1,106 @@
+package com.genc.billing_service.exception;
+
+import com.genc.billing_service.dto.ApiResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import jakarta.validation.ConstraintViolationException;
+import java.util.HashMap;
+import java.util.Map;
+
+@RestControllerAdvice
+@Slf4j
+public class GlobalExceptionHandler {
+
+    // Handle validation errors from @Valid
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationExceptions(
+            MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach((error) -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        log.warn("Validation failed: {}", errors);
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.error("Validation failed", errors));
+    }
+
+    // Handle constraint violations
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<Object>> handleConstraintViolation(
+            ConstraintViolationException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getConstraintViolations().forEach(violation -> {
+            String fieldName = violation.getPropertyPath().toString();
+            String errorMessage = violation.getMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        log.warn("Constraint violation: {}", errors);
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.error("Validation failed", errors));
+    }
+
+    // Handle database integrity violations (e.g., null constraints, unique constraints)
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Object>> handleDataIntegrityViolation(
+            DataIntegrityViolationException ex) {
+        String message = "Database error occurred";
+        String rootCause = ex.getRootCause() != null ? ex.getRootCause().getMessage() : ex.getMessage();
+        
+        // Parse common database errors to user-friendly messages
+        if (rootCause != null) {
+            if (rootCause.contains("cannot be null")) {
+                // Extract field name from error
+                String field = extractFieldFromNullError(rootCause);
+                message = field != null ? "Missing required field: " + field : "A required field is missing";
+            } else if (rootCause.contains("Duplicate entry")) {
+                message = "A record with this value already exists";
+            } else if (rootCause.contains("foreign key constraint")) {
+                message = "Cannot complete operation due to related records";
+            }
+        }
+        
+        log.error("Data integrity violation: {}", rootCause);
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.error(message));
+    }
+
+    // Handle runtime exceptions
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ApiResponse<Object>> handleRuntimeException(RuntimeException ex) {
+        log.error("Runtime error: {}", ex.getMessage());
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.error(ex.getMessage()));
+    }
+
+    // Handle generic exceptions
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<Object>> handleGenericException(Exception ex) {
+        log.error("Unexpected error: ", ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("An unexpected error occurred. Please try again."));
+    }
+
+    private String extractFieldFromNullError(String message) {
+        // Try to extract field name from SQL error like "Column 'claim_status' cannot be null"
+        if (message.contains("Column '") && message.contains("' cannot be null")) {
+            int start = message.indexOf("Column '") + 8;
+            int end = message.indexOf("' cannot be null");
+            if (start > 7 && end > start) {
+                String columnName = message.substring(start, end);
+                // Convert snake_case to readable format
+                return columnName.replace("_", " ");
+            }
+        }
+        return null;
+    }
+}
+

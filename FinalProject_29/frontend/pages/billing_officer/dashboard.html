@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billing Dashboard - Patient Care System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../../css/style.css" rel="stylesheet">
+    <link href="../../css/dashboard.css" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <i class="bi bi-hospital logo-icon"></i>
+                <h4>Patient Care System</h4>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-section">Main Menu</li>
+                <li><a href="dashboard.html" class="active"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                <li><a href="invoices.html"><i class="bi bi-receipt"></i> Invoices</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <button class="logout-btn" onclick="handleLogout()">
+                    <i class="bi bi-box-arrow-left"></i> Logout
+                </button>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <header class="top-navbar">
+                <button class="sidebar-toggle" onclick="toggleSidebar()">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h1 class="page-title">Dashboard</h1>
+                <div class="navbar-right">
+                    <span class="badge bg-primary" id="userName">Billing Officer</span>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <div class="alert alert-primary mb-4">
+                    <h5 class="mb-1"><i class="bi bi-cash-stack me-2"></i>Welcome, <span id="welcomeName">Billing Officer</span>!</h5>
+                    <p class="mb-0">Manage invoices and payments.</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="stat-icon warning">
+                                <i class="bi bi-hourglass-split"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="unpaidInvoices">0</h3>
+                                <p>Unpaid Invoices</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="stat-icon success">
+                                <i class="bi bi-currency-dollar"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="totalReceived">$0</h3>
+                                <p>Total Received</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="stat-icon danger">
+                                <i class="bi bi-exclamation-circle"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="pendingAmount">$0</h3>
+                                <p>Outstanding Amount</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="quick-actions">
+                            <a href="invoices.html?action=create" class="quick-action-btn">
+                                <i class="bi bi-plus-circle"></i>
+                                <span>Create Invoice</span>
+                            </a>
+                            <a href="invoices.html?filter=unpaid" class="quick-action-btn">
+                                <i class="bi bi-receipt"></i>
+                                <span>Unpaid Invoices</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Unpaid Invoices -->
+                <div class="data-card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-receipt me-2"></i>Recent Unpaid Invoices</h5>
+                        <a href="invoices.html" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Invoice #</th>
+                                        <th>Patient</th>
+                                        <th>Amount</th>
+                                        <th>Due</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="unpaidTable">
+                                    <tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../js/config.js"></script>
+    <script src="../../js/api.js"></script>
+    <script src="../../js/utils.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script>
+        if (!Auth.requireRole([CONFIG.ROLES.BILLING_OFFICER])) {
+            window.location.href = '../../index.html';
+        }
+
+        let patients = {};
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            const user = Auth.getUser();
+            document.getElementById('welcomeName').textContent = user.fullName || 'Billing Officer';
+            document.getElementById('userName').textContent = user.fullName || 'Billing Officer';
+            await loadDashboardData();
+        });
+
+        async function loadDashboardData() {
+            try {
+                // Load all invoices
+                const invoices = await BillingAPI.getAllInvoices();
+
+                // Calculate stats
+                const unpaid = invoices.filter(i => i.paymentStatus !== 'PAID');
+                document.getElementById('unpaidInvoices').textContent = unpaid.length;
+
+                let totalReceived = 0;
+                let pendingAmount = 0;
+                invoices.forEach(inv => {
+                    totalReceived += inv.amountPaid || 0;
+                    if (inv.paymentStatus !== 'PAID') {
+                        pendingAmount += (inv.patientPayable || 0) - (inv.amountPaid || 0);
+                    }
+                });
+
+                document.getElementById('totalReceived').textContent = Utils.formatCurrency(totalReceived);
+                document.getElementById('pendingAmount').textContent = Utils.formatCurrency(pendingAmount);
+
+
+
+                // Load patient details
+                await loadPatientDetails(unpaid);
+                displayUnpaidInvoices(unpaid.slice(0, 10));
+
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+
+        async function loadPatientDetails(invoices) {
+            const patientIds = [...new Set(invoices.map(i => i.patientId))];
+            for (const pid of patientIds) {
+                if (!patients[pid]) {
+                    try {
+                        patients[pid] = await PatientAPI.getById(pid);
+                    } catch (e) {
+                        patients[pid] = { fullName: 'Unknown' };
+                    }
+                }
+            }
+        }
+
+        function displayUnpaidInvoices(invoices) {
+            const tbody = document.getElementById('unpaidTable');
+
+            if (invoices.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6">${Utils.getEmptyState('No unpaid invoices', 'bi-check-circle')}</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = invoices.map(inv => {
+                const patient = patients[inv.patientId] || { fullName: 'Unknown' };
+                const due = (inv.patientPayable || 0) - (inv.amountPaid || 0);
+
+                return `<tr>
+                    <td><strong>${inv.invoiceNumber}</strong></td>
+                    <td>${patient.fullName}</td>
+                    <td>${Utils.formatCurrency(inv.totalAmount)}</td>
+                    <td class="text-danger">${Utils.formatCurrency(due)}</td>
+                    <td>${Utils.getStatusBadge(inv.paymentStatus)}</td>
+                    <td>
+                        <a href="invoices.html?view=${inv.invoiceId}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-eye"></i></a>
+                        <a href="invoices.html?pay=${inv.invoiceId}" class="btn btn-sm btn-success"><i class="bi bi-cash"></i></a>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('show');
+            document.getElementById('sidebarOverlay').classList.toggle('show');
+        }
+
+        function handleLogout() {
+            Auth.logout();
+            window.location.href = '../../index.html';
+        }
+    </script>
+</body>
+</html>
+

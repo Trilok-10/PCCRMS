@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Patient - Receptionist Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../../css/style.css" rel="stylesheet">
+    <link href="../../css/dashboard.css" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <i class="bi bi-hospital logo-icon"></i>
+                <h4>Patient Care System</h4>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-section">Main Menu</li>
+                <li><a href="dashboard.html"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                <li><a href="register-patient.html" class="active"><i class="bi bi-person-plus"></i> Register Patient</a></li>
+                <li><a href="patient-search.html"><i class="bi bi-people"></i> Patient List</a></li>
+                <li><a href="appointments.html"><i class="bi bi-calendar-check"></i> Appointments</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <button class="logout-btn" onclick="handleLogout()">
+                    <i class="bi bi-box-arrow-left"></i> Logout
+                </button>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <header class="top-navbar">
+                <button class="sidebar-toggle" onclick="toggleSidebar()">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h1 class="page-title">Register New Patient</h1>
+                <div class="navbar-right"></div>
+            </header>
+
+            <div class="page-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-person-plus me-2"></i>Patient Registration Form</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="registrationForm" novalidate>
+                            <div id="alertContainer"></div>
+
+                            <h6 class="text-muted mb-3">Personal Information</h6>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="fullName" required
+                                           pattern="[A-Za-z\s]+" minlength="3"
+                                           title="Only letters and spaces, minimum 3 characters">
+                                    <div class="invalid-feedback">This field is required. Only letters and spaces, minimum 3 characters.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="dateOfBirth" required>
+                                    <div class="invalid-feedback">This field is required.</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Gender <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="gender" required>
+                                        <option value="">Select...</option>
+                                        <option value="MALE">Male</option>
+                                        <option value="FEMALE">Female</option>
+                                        <option value="OTHER">Other</option>
+                                    </select>
+                                    <div class="invalid-feedback">This field is required.</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Blood Group</label>
+                                    <select class="form-select" id="bloodGroup">
+                                        <option value="">Select...</option>
+                                        <option value="A+">A+</option>
+                                        <option value="A-">A-</option>
+                                        <option value="B+">B+</option>
+                                        <option value="B-">B-</option>
+                                        <option value="AB+">AB+</option>
+                                        <option value="AB-">AB-</option>
+                                        <option value="O+">O+</option>
+                                        <option value="O-">O-</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Marital Status</label>
+                                    <select class="form-select" id="maritalStatus">
+                                        <option value="">Select...</option>
+                                        <option value="Single">Single</option>
+                                        <option value="Married">Married</option>
+                                        <option value="Divorced">Divorced</option>
+                                        <option value="Widowed">Widowed</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <h6 class="text-muted mb-3">Contact Information</h6>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Contact Number <span class="text-danger">*</span></label>
+                                    <input type="tel" class="form-control" id="contactNumber" required
+                                           pattern="[0-9]{10}" maxlength="10"
+                                           title="Exactly 10 digits">
+                                    <div class="invalid-feedback">This field is required. Exactly 10 digits required.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Email <span class="text-danger">*</span></label>
+                                    <input type="email" class="form-control" id="email" required placeholder="Required for patient login">
+                                    <div class="invalid-feedback">This field is required. Must be a valid email address.</div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Address</label>
+                                    <textarea class="form-control" id="address" rows="2" minlength="10"
+                                              title="Minimum 10 characters"></textarea>
+                                    <div class="invalid-feedback">Minimum 10 characters required.</div>
+                                </div>
+                            </div>
+
+                            <h6 class="text-muted mb-3">Login Credentials</h6>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Password <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="password" required
+                                               minlength="6" placeholder="Enter password for patient login"
+                                               oninput="this.value = this.value.replace(/\s/g, '')">
+                                        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
+                                            <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                                        </button>
+                                    </div>
+                                    <div class="form-text">Minimum 6 characters</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
+                                    <input type="password" class="form-control" id="confirmPassword" required
+                                           minlength="6" placeholder="Confirm password"
+                                           oninput="this.value = this.value.replace(/\s/g, '')">
+                                    <div id="passwordMatchError" class="invalid-feedback">Passwords do not match</div>
+                                </div>
+                            </div>
+
+                            <h6 class="text-muted mb-3">Emergency Contact</h6>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Emergency Contact Name</label>
+                                    <input type="text" class="form-control" id="emergencyContactName"
+                                           pattern="[A-Za-z\s]+" minlength="3"
+                                           title="Only letters and spaces, minimum 3 characters">
+                                    <div class="invalid-feedback">Only letters and spaces, minimum 3 characters.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Emergency Contact Phone</label>
+                                    <input type="tel" class="form-control" id="emergencyContactPhone"
+                                           pattern="[0-9]{10}" maxlength="10"
+                                           title="Exactly 10 digits">
+                                    <div class="invalid-feedback">Exactly 10 digits required.</div>
+                                </div>
+                            </div>
+
+                            <h6 class="text-muted mb-3">Medical Information</h6>
+                            <div class="row g-3 mb-4">
+                                <div class="col-12">
+                                    <label class="form-label">Known Allergies</label>
+                                    <textarea class="form-control" id="allergies" rows="2" placeholder="List any known allergies..."></textarea>
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <button type="submit" class="btn btn-primary" id="registerBtn">
+                                    <i class="bi bi-person-check me-2"></i>Register Patient
+                                </button>
+                                <button type="reset" class="btn btn-secondary">
+                                    <i class="bi bi-x-lg me-2"></i>Clear Form
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../js/config.js"></script>
+    <script src="../../js/api.js"></script>
+    <script src="../../js/utils.js"></script>
+    <script src="../../js/auth.js"></script>
+    <script>
+        if (!Auth.requireRole([CONFIG.ROLES.RECEPTIONIST])) {
+            window.location.href = '../../index.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('registrationForm').addEventListener('submit', handleRegistration);
+
+            // Set max date for DOB to yesterday (must be in past)
+            const today = new Date();
+            today.setDate(today.getDate() - 1);
+            document.getElementById('dateOfBirth').max = today.toISOString().split('T')[0];
+
+            // Password validation on input
+            document.getElementById('confirmPassword').addEventListener('input', validatePasswordMatch);
+            document.getElementById('password').addEventListener('input', validatePasswordMatch);
+
+            // DOB validation on change
+            document.getElementById('dateOfBirth').addEventListener('change', validateDOB);
+        });
+
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const icon = document.getElementById('togglePasswordIcon');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        }
+
+        function validatePasswordMatch() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const confirmInput = document.getElementById('confirmPassword');
+
+            if (confirmPassword && password !== confirmPassword) {
+                confirmInput.classList.add('is-invalid');
+                return false;
+            } else {
+                confirmInput.classList.remove('is-invalid');
+                return true;
+            }
+        }
+
+        function validatePassword(password) {
+            if (/\s/.test(password)) {
+                return { valid: false, message: 'Password must not contain spaces' };
+            }
+            if (password.length < 6) {
+                return { valid: false, message: 'Password must be at least 6 characters' };
+            }
+            return { valid: true };
+        }
+
+        function validateDOB() {
+            const dobInput = document.getElementById('dateOfBirth');
+            const dobValue = dobInput.value;
+
+            if (!dobValue) return true; // Let required validation handle empty
+
+            const dob = new Date(dobValue);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (dob >= today) {
+                dobInput.classList.add('is-invalid');
+                // Add or update invalid feedback
+                let feedback = dobInput.nextElementSibling;
+                if (!feedback || !feedback.classList.contains('invalid-feedback')) {
+                    feedback = document.createElement('div');
+                    feedback.className = 'invalid-feedback';
+                    dobInput.parentNode.insertBefore(feedback, dobInput.nextSibling);
+                }
+                feedback.textContent = 'Enter correct DOB - Date must be in the past';
+                return false;
+            } else {
+                dobInput.classList.remove('is-invalid');
+                const feedback = dobInput.nextElementSibling;
+                if (feedback && feedback.classList.contains('invalid-feedback')) {
+                    feedback.remove();
+                }
+                return true;
+            }
+        }
+
+        async function handleRegistration(e) {
+            e.preventDefault();
+
+            const form = document.getElementById('registrationForm');
+            if (!form.checkValidity()) {
+                e.stopPropagation();
+                form.classList.add('was-validated');
+                return;
+            }
+            form.classList.add('was-validated');
+
+            const btn = document.getElementById('registerBtn');
+            const alertContainer = document.getElementById('alertContainer');
+            alertContainer.innerHTML = '';
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const fullName = document.getElementById('fullName').value.trim();
+            const contactNumber = document.getElementById('contactNumber').value.trim();
+            const dateOfBirth = document.getElementById('dateOfBirth').value;
+
+            // Validate email is provided
+            if (!email) {
+                alertContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Email is required for patient login
+                    </div>
+                `;
+                return;
+            }
+
+            // Validate email ends with .com
+            if (!Utils.isValidEmail(email)) {
+                alertContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Please enter a valid email address (must end with .com).
+                    </div>
+                `;
+                return;
+            }
+
+            // Validate DOB
+            if (!validateDOB()) {
+                alertContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Enter correct DOB - Date of birth must be in the past
+                    </div>
+                `;
+                document.getElementById('dateOfBirth').focus();
+                return;
+            }
+
+            // Validate full name
+            if (!/^[A-Za-z\s]+$/.test(fullName) || fullName.length < 3) {
+                alertContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Full Name must contain only letters and spaces, minimum 3 characters.
+                    </div>
+                `;
+                document.getElementById('fullName').focus();
+                return;
+            }
+
+            // Validate contact number
+            if (!/^[0-9]{10}$/.test(contactNumber)) {
+                alertContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Contact Number must be exactly 10 digits.
+                    </div>
+                `;
+                document.getElementById('contactNumber').focus();
+                return;
+            }
+
+            // Validate address if provided
+            const address = document.getElementById('address').value.trim();
+            if (address && address.length < 10) {
+                alertContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Address must be at least 10 characters.
+                    </div>
+                `;
+                document.getElementById('address').focus();
+                return;
+            }
+
+            // Validate emergency contact name if provided
+            const emergencyName = document.getElementById('emergencyContactName').value.trim();
+            if (emergencyName && (!/^[A-Za-z\s]+$/.test(emergencyName) || emergencyName.length < 3)) {
+                alertContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Emergency Contact Name must contain only letters and spaces, minimum 3 characters.
+                    </div>
+                `;
+                document.getElementById('emergencyContactName').focus();
+                return;
+            }
+
+            // Validate emergency contact phone if provided
+            const emergencyPhone = document.getElementById('emergencyContactPhone').value.trim();
+            if (emergencyPhone && !/^[0-9]{10}$/.test(emergencyPhone)) {
+                alertContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Emergency Contact Phone must be exactly 10 digits.
+                    </div>
+                `;
+                document.getElementById('emergencyContactPhone').focus();
+                return;
+            }
+
+            // Validate password
+            const passwordValidation = validatePassword(password);
+            if (!passwordValidation.valid) {
+                alertContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        ${passwordValidation.message}
+                    </div>
+                `;
+                return;
+            }
+
+            // Validate password match
+            if (password !== confirmPassword) {
+                alertContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Passwords do not match
+                    </div>
+                `;
+                return;
+            }
+
+            Utils.setButtonLoading(btn, true);
+
+            try {
+                // Step 1: Create user account in auth service
+                const userResponse = await AuthAPI.createUser({
+                    email: email,
+                    password: password,
+                    fullName: fullName,
+                    phone: contactNumber,
+                    role: 'PATIENT'
+                });
+
+                const userId = userResponse.id;
+
+                // Step 2: Create patient record linked to user account
+                const patientData = {
+                    fullName: fullName,
+                    dateOfBirth: dateOfBirth,
+                    gender: document.getElementById('gender').value,
+                    bloodGroup: document.getElementById('bloodGroup').value || null,
+                    contactNumber: contactNumber,
+                    email: email,
+                    address: document.getElementById('address').value.trim() || null,
+                    emergencyContactName: document.getElementById('emergencyContactName').value.trim() || null,
+                    emergencyPhone: document.getElementById('emergencyContactPhone').value.trim() || null,
+                    allergies: document.getElementById('allergies').value.trim() || null,
+                    userId: userId
+                };
+
+                const result = await PatientAPI.register(patientData);
+
+                alertContainer.innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle me-2"></i>
+                        Patient registered successfully!<br>
+                        <strong>MRN: ${result.mrn || 'Generated'}</strong><br>
+                        <small class="text-muted">Patient can now login using email: ${email}</small>
+                    </div>
+                `;
+
+                // Reset form
+                document.getElementById('registrationForm').reset();
+
+                // Option to book appointment
+                const bookNow = await Utils.confirm('Book Appointment?', 'Would you like to book an appointment for this patient?');
+                if (bookNow) {
+                    window.location.href = `patient-search.html?action=book&patientId=${result.patientId}`;
+                }
+
+            } catch (error) {
+                console.error('Registration error:', error);
+                // Use the utility function to extract error message properly
+                const errorMessage = Utils.extractErrorMessage(error, 'Failed to register patient');
+                alertContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        ${errorMessage}
+                    </div>
+                `;
+            } finally {
+                Utils.setButtonLoading(btn, false);
+            }
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('show');
+            document.getElementById('sidebarOverlay').classList.toggle('show');
+        }
+
+        function handleLogout() {
+            Auth.logout();
+            window.location.href = '../../index.html';
+        }
+    </script>
+</body>
+</html>
+
