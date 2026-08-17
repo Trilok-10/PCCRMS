@@ -1,2 +1,2 @@
- "PCCRMS" 
+ "PCCRMS"  - 
  a modular Spring Boot microservices Patient Care & Clinical Records Management System using Eureka service discovery, Spring Cloud Gateway with JWT-based auth, OpenFeign inter-service communication, and multi-schema MySQL   persistence. Built service-specific bounded contexts (Auth, Patients, Appointments, EHR, Pharmacy, Billing), implemented API gateway authentication + header propagation, cascade deletion flows, and a responsive registration frontend.****
